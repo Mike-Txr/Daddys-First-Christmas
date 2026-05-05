@@ -10,6 +10,7 @@ import functions.menu as menu
 import functions.key_handler as key_handler
 import functions.obstacles as obstacles
 import functions.screen_logic as screen_logic
+import functions.UI as UI
 
 class MyGame(arcade.Window):
 
@@ -26,23 +27,36 @@ class MyGame(arcade.Window):
         self.x_scale = self.window_width / settings.INGAME_WIDTH
         self.y_scale = self.window_height / settings.INGAME_HEIGHT
         self.either_scale = min(self.x_scale, self.y_scale)
+       
+        #Menu, should be shown at the start of the game only
+        self.menu = True#Variable for menu (True because the game starts with the menu, False for disabling)
+        self.menu_screen = menu.Menu(self)#class for the menu, which is defined in menu.py
 
-        ##Menu##
-        self.menu = True#Variable for menu (True because the game starts with the menu)
-        self.menu_screen = menu.Menu(self)#class for the menu, which is defined in functions/menu.py
-
-        ##Pause menu##
-        self.paused = False # Variable to hold paused state. Set to True to pause the game, False to unpause.
-        self.pause_screen = pause_screen.PauseScreen(self)#class for the pause menu, which is defined in functions/pause_screen.py
-        
-        ##Game over##
-        self.game_over = False # Variable to hold game over state. Set to True to trigger the game over screen, False to disable it.
-        self.game_over_screen = game_over.GameOver(self)#class for the game over screen, which is defined in functions/game_over.py
-        
 
     def setup(self):
         """ Set up the game variables. Call to re-start the game. """
         # Create your sprites and sprite lists here
+
+        #Pause menu
+        self.paused = False#Variable to hold paused state. Set to True to pause the game, False to unpause.
+        self.pause_screen = pause_screen.PauseScreen(self)#class for the pause menu, which is defined in pause_screen.py
+        
+        #Game over screen
+        self.game_over = False#Variable to hold game over state. Set to True to trigger the game over screen, False to disable it.
+        self.game_over_screen = game_over.GameOver(self)#class for the game over screen, which is defined in game_over.py
+
+
+        #######Main Game Variables#######
+        self.max_health = 10#max_health variable, could be changed throughout the game
+        self.health = self.max_health#current health variable, starts with max health
+
+        self.max_power = 50#max_power variable, could be changed throughout the game
+        self.power = self.max_power#current power variable, starts with max power
+
+        self.levelup = 100#variable, level up will be reached at 100
+        self.current_xp = 50#current experience points variable, starts with 50
+
+        self.coins = 10#variable for coins, could be changed throughout the game
 
 
         #Load the tilemap (created with Tiled)
@@ -60,10 +74,32 @@ class MyGame(arcade.Window):
         #loads the simple physics engine 
         self.physics_engine = arcade.PhysicsEngineSimple(self.player, self.scene["Obstacles"])
 
-
-        
+        UI.setup_hud(self)#load the function to set up the HUD (health, power, etc.) from UI.py
+        self.set_level_progress()
 
         pass
+    
+#############################These functions should maybe be moved to the corresponding .py files, but for now they stay here until more game logic is developed############
+
+    #function to set the health of the player, which also updates the health label
+    def set_health(self, value: int):
+        self.health = max(0, min(self.max_health, value))
+        self.health_label.text = f"{self.health} / {self.max_health}"
+
+    def set_power(self, value: int):
+        self.power = max(0, min(self.max_power, value))
+        self.power_label.text = f"{self.power} / {self.max_power}"
+
+    def set_level_progress(self):
+        progress = self.current_xp / self.levelup
+        if progress >= 1:
+            print("Level up!")###############################leveling up###
+        self.level_bar_fill.width = (self.level_panel_width - 60) * progress
+
+    def set_coins(self, value: int):
+        self.coins = max(0, value)
+        self.coins_label.text = f"{self.coins}"
+
 
     def on_draw(self):
         """
@@ -77,13 +113,17 @@ class MyGame(arcade.Window):
         self.scene.draw(pixelated=True)
 
         if self.menu:#if the menu variable is true, draw the menu screen
-            self.menu_screen.draw() # call the on_draw function from menu.py
+            self.menu_screen.draw()#call the on_draw function from menu.py
+
+        #draw the HUD, but not in the starting menu (not self.menu)
+        if not self.menu:
+            self.hud_ui.draw()#draw the HUD (health, etc.)
 
         if self.paused:#if the game is paused, draw the pause screen
-            self.pause_screen.draw() # call the on_draw function from pause_screen.py
+            self.pause_screen.draw()#call the on_draw function from pause_screen.py
         
         if self.game_over:#if the game is over, draw the game over screen#############################Game over trigger --> game_over = True
-            self.game_over_screen.draw() # call the on_draw function from game_over.py
+            self.game_over_screen.draw()#call the on_draw function from game_over.py
 
 
     def on_update(self, delta_time):
@@ -93,24 +133,24 @@ class MyGame(arcade.Window):
         need it.
         """
 
-        ###menu###
+        #menu
         if self.menu:#if the menu variable is true, enable the menu screen and skip the rest of the update function
             self.menu_screen.enable()
-            return # Skip the rest of the update function if the menu is active
+            return 
         else:
             self.game_over_screen.disable()#Disable the game over screen when the game is not over
 
-        ###game over screen###
+        #game over screen
         if self.game_over:#if the game is over, enable the game over screen and skip the rest of the update function
             self.game_over_screen.enable()
-            return # Skip the rest of the update function if the game is over
+            return 
         else:
             self.game_over_screen.disable()#Disable the game over screen when the game is not over
 
-        ###pause screen###
+        #pause screen
         if self.paused:#if the game is paused, enable the pause screen and skip the rest of the update function
             self.pause_screen.enable()
-            return # Skip the rest of the update function if the game is paused
+            return 
         else:
             self.pause_screen.disable()#Disable the pause screen when the game is not paused
 
@@ -140,11 +180,23 @@ class MyGame(arcade.Window):
 
         key_handler.key_press(key)
 
-        # Check if the user hit the Esc key and toggle paused state
-        if key == arcade.key.ESCAPE and not self.game_over: #only allow pausing if the game is not over
+        #Check if the user hit the Esc key and toggle paused state
+        if key == arcade.key.ESCAPE and not self.game_over:#only allow pausing if the game is not over (not self.game_over)
             self.paused = not self.paused
 
-
+        #if the menu, paused or game over screen is active, pass the key press event to the corresponding .py file
+        if self.menu:
+            self.menu_screen.on_key_press(key, key_modifiers)
+            return
+        
+        if self.paused:
+            self.pause_screen.on_key_press(key, key_modifiers)
+            return
+        
+        if self.game_over:
+            self.game_over_screen.on_key_press(key, key_modifiers)
+            return
+    
         if key == arcade.key.SPACE:###############################only for debugging, will be removed later, triggers the game over screen when space is pressed
             self.game_over = not self.game_over
         
