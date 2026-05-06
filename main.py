@@ -125,15 +125,15 @@ class MyGame(arcade.Window):
 
             #load new scene
             misc.load_scene(self, collision.properties["next_map"])
-            self.player = screen_logic.correct_player_pos(self.player, collision, self.either_scale)
+            screen_logic.correct_player_pos(self.player, collision, self.either_scale)
 
             if colls.coll_check(self.player, self.scene["Obstacles"]): #if there is an obstacle colliding with the player on the new screen
                 
                 misc.load_scene(self, self.current_screen) #load old scene again (player isn't allowed to change screens)
 
                 #reset player to old position
-                self.player = screen_logic.counter_correct_player_pos(self.player, collision, self.either_scale, current_coords)
-                
+                screen_logic.counter_correct_player_pos(self.player, collision, self.either_scale, current_coords)
+
             else:
                 #if the player is allowed to change screens, save the new map to the class variables
                 self.current_screen = collision.properties["next_map"]

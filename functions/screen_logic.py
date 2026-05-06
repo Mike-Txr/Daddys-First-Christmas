@@ -34,7 +34,6 @@ def correct_player_pos(player, collision, scale):
         player.center_x = 0 + 0.2*player.width
     elif collision.properties["side"] == "left":
         player.center_x = 384*scale - 0.2*player.width
-    return player
 
 def counter_correct_player_pos(player, collision, scale, orig_coords):
     player.center_x = orig_coords[0]
@@ -47,4 +46,3 @@ def counter_correct_player_pos(player, collision, scale, orig_coords):
         player.center_x -= scale
     elif collision.properties["side"] == "left":
         player.center_x += scale
-    return player
