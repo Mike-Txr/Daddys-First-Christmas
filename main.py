@@ -60,8 +60,11 @@ class MyGame(arcade.Window):
         self.max_power = 50#max_power variable, could be changed throughout the game
         self.power = self.max_power#current power variable, starts with max power
 
+        self.attack = 5#variable for the attack stat, could be changed throughout the game
+
+        self.level = 1#variable for the current level, starts at 1
         self.levelup = 100#variable, level up will be reached at 100
-        self.current_xp = 50#current experience points variable, starts with 50
+        self.current_xp = 90#current experience points variable, starts with 50
 
         self.coins = 10#variable for coins, could be changed throughout the game
 
@@ -78,7 +81,7 @@ class MyGame(arcade.Window):
 
 
         UI.setup_hud(self)#load the function to set up the HUD (health, power, etc.) from UI.py
-        self.set_level_progress()
+        self.set_xp(self.current_xp)
 
         pass
     
@@ -95,13 +98,24 @@ class MyGame(arcade.Window):
 
     def set_xp(self, value: int):
         self.current_xp = max(0, value)
-        self.set_level_progress()
+
+        leveled_up = False
+
+        while self.current_xp >= self.levelup:
+            self.current_xp -= self.levelup
+            self.level += 1
+            leveled_up = True
+            print("Level up! Aktuelles Level:", self.level)
         
-    def set_level_progress(self):
-        progress = self.current_xp / self.levelup
-        if progress >= 1:
-            print("Level up!")###############################leveling up###
-        self.level_bar_fill.width = (self.level_panel_width - 60) * progress
+        if self.level > 0:
+            progress = self.current_xp / self.levelup
+        else:
+            progress = 0
+
+        progress = max(0, min(1, progress))#make sure the progress is between 0 and 1
+        self.level_label.text = f"{self.level}"
+        bar_width = max(1, self.level_panel_width - 100)#make sure the bar width is at least 1 to avoid errors
+        self.level_bar_fill.width = max(1, int(bar_width * progress))
 
     def set_coins(self, value: int):
         self.coins = max(0, value)
@@ -234,7 +248,7 @@ class MyGame(arcade.Window):
         if key == arcade.key.B:#################################only for debugging, will be removed later, triggers the battle view when B is pressed
             #enemy data will be part of a class later
             if not self.battle:        
-                enemy_data = {"max_hp": 30, "attack": 5, "red_time": 1.0, "xp_reward": 40, "coin_reward": 10}#########
+                enemy_data = {"max_hp": 5, "attack": 5, "red_time": 1.0, "xp_reward": 10, "coin_reward": 10}#########
                 self.battle = True
                 self.battleview.start_battle(enemy_data)
                 

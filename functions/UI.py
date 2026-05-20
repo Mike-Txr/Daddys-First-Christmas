@@ -69,10 +69,12 @@ def setup_hud(self):
     self.hud_root.add(self.level_row, anchor_x="left", anchor_y="top", align_x=self.level_panel_x + 10, align_y=-8)
     self.level_row.add(arcade.gui.UIImage(texture=arcade.load_texture("assets/cugarglaze.png"), width=35, height=35))
 
-    self.level_bar_bg = arcade.gui.UISpace(width=self.level_panel_width - 60, height=20, color=(24, 117, 168, transparency))#bit darker than the level panel
+    self.level_bar_bg = arcade.gui.UISpace(width=self.level_panel_width - 100, height=20, color=(24, 117, 168, transparency))#bit darker than the level panel
     self.level_bar_fill = arcade.gui.UISpace(width=0, height=20, color=(251, 245, 219, transparency))
     self.hud_root.add(self.level_bar_bg, anchor_x="left", anchor_y="top", align_x=self.level_panel_x + 50, align_y=-15)
     self.hud_root.add(self.level_bar_fill, anchor_x="left", anchor_y="top", align_x=self.level_panel_x + 50, align_y=-15)
+    self.level_label = arcade.gui.UILabel(text=f"{self.level}", font_size=25, text_color=arcade.color.WHITE,)
+    self.hud_root.add(self.level_label, anchor_x="left", anchor_y="top", align_x=self.level_panel_x + self.level_panel_width - 40, align_y=-5)
 
     #create the content of the coins panel
     self.coin_row = arcade.gui.UIBoxLayout(vertical=False)

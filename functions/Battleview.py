@@ -1,3 +1,4 @@
+#nächste mal um level up kümmern dass das geht und dann weiter schaeun
 import arcade
 import arcade.gui
 
@@ -27,6 +28,57 @@ class BattleScreen:
 
         self.block_success = False
 
+        self.levelup_pending = False
+
+        #level up menu
+        self.levelup_manager = arcade.gui.UIManager()
+
+        self.levelup_box = arcade.gui.UIBoxLayout()
+
+        self.hp_button = arcade.gui.UIFlatButton(text="Increase Max HP", width=300)
+        self.power_button = arcade.gui.UIFlatButton(text="Increase Max Power", width=300)
+        self.attack_button = arcade.gui.UIFlatButton(text="Increase Attack", width=300)
+
+        self.levelup_buttons = [
+            self.hp_button,
+            self.power_button,
+            self.attack_button
+        ]
+
+        self.levelup_selected = 0
+
+        @self.hp_button.event("on_click")
+        def _(event):
+            self.levelup_selected = 0
+            self.activate_levelup_choice()
+
+        @self.power_button.event("on_click")
+        def _(event):
+            self.levelup_selected = 1
+            self.activate_levelup_choice()
+
+        @self.attack_button.event("on_click")
+        def _(event):
+            self.levelup_selected = 2
+            self.activate_levelup_choice()
+
+        self.levelup_box.add(self.hp_button)
+        self.levelup_box.add(arcade.gui.UISpace(height=20))
+
+        self.levelup_box.add(self.power_button)
+        self.levelup_box.add(arcade.gui.UISpace(height=20))
+
+        self.levelup_box.add(self.attack_button)
+
+        self.levelup_anchor = arcade.gui.UIAnchorLayout()
+        self.levelup_anchor.add(
+            anchor_x="center_x",
+            anchor_y="center_y",
+            child=self.levelup_box
+        )
+
+        self.levelup_manager.add(self.levelup_anchor)
+
     def start_battle(self, enemy):
         self.current_enemy = enemy
         self.title_label.text = "Battle!"
@@ -38,7 +90,7 @@ class BattleScreen:
         # später kannst du hier enemy.hp, enemy.texture usw. übernehmen
 
     def update(self, delta_time):
-        if self.state == "inactive":
+        if self.state in ("inactive", "finished"):
             return
 
         self.timer = self.timer + delta_time
@@ -81,8 +133,10 @@ class BattleScreen:
             self.block_success = False
 
     def finish_attack_timing(self, missed=False):
-        if self.state != "player_timing_attack":
+        if self.state != "player_timing_attack" or self.current_enemy is None:
             return
+        
+        self.state = "resolving"
 
         if missed:
             damage = 2
@@ -125,13 +179,50 @@ class BattleScreen:
         self.green_active = False
         self.block_success = False
 
+    def activate_levelup_choice(self):
+
+        if self.levelup_selected == 0:
+            self.game.max_health += 5
+            self.game.set_health(self.game.max_health)
+
+            print("Max HP erhöht")
+
+        elif self.levelup_selected == 1:
+            self.game.max_power += 10
+            self.game.set_power(self.game.max_power)
+
+            print("Max Power erhöht")
+
+        elif self.levelup_selected == 2:
+            self.game.attack += 2
+
+            print("Attack erhöht")
+
+        self.levelup_pending = False
+
+        self.state = "inactive"
+        self.current_enemy = None
+        self.game.battle = False
+
+        self.levelup_manager.disable()
+        self.disable()
 
     def end_battle(self, win=False):
         print("Battle beendet:", "Sieg" if win else "Niederlage")
+        old_level = self.game.level
+
         self.game.set_coins(self.game.coins + self.current_enemy["coin_reward"])
         self.game.set_xp(self.game.current_xp + self.current_enemy["xp_reward"])
 
+        if self.game.level > old_level:
+            self.levelup_pending = True
+            self.levelup_selected = 0
+            self.levelup_manager.enable()
+            self.state = "levelup"
+            return
+        
         self.state = "inactive"
+        self.state = "finished"
         self.current_enemy = None
         self.game.battle = False
         self.disable()
@@ -171,6 +262,18 @@ class BattleScreen:
         self.draw_traffic_light()
         self.ui.draw()
 
+        if self.levelup_pending:
+
+            arcade.draw_lrbt_rectangle_filled(
+                0,
+                self.game.window_width,
+                0,
+                self.game.window_height,
+                (0, 0, 0, 180)
+            )
+
+            self.levelup_manager.draw()
+
     def on_key_press(self, key, key_modifiers):
         if key == arcade.key.SPACE:
             if self.state == "player_turn":
@@ -188,3 +291,15 @@ class BattleScreen:
                     self.resolve_enemy_attack(blocked=True)
                 else:
                     print("Too early")
+
+        if self.levelup_pending:
+            if key == arcade.key.W or key == arcade.key.UP:
+                self.levelup_selected = (self.levelup_selected - 1) % len(self.levelup_buttons)
+
+            elif key == arcade.key.S or key == arcade.key.DOWN:
+                self.levelup_selected = (self.levelup_selected + 1) % len(self.levelup_buttons)
+
+            elif key == arcade.key.ENTER or key == arcade.key.RETURN:
+                self.activate_levelup_choice()
+
+            return
