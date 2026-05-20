@@ -32,5 +32,5 @@ def coll_check(player, obstacles, adjust_player=False):
                     player.top = obstacle.bottom
                 elif nearest_edge_index == 3:
                     player.bottom = obstacle.top
-            return True
+            return obstacle
     return False
