@@ -12,6 +12,7 @@ import functions.screen_logic as screen_logic
 import functions.UI as UI
 import functions.collision_logic as colls
 import functions.misc as misc
+import functions.Battleview as battleview
 
 class MyGame(arcade.Window):
 
@@ -46,6 +47,11 @@ class MyGame(arcade.Window):
         self.game_over = False#Variable to hold game over state. Set to True to trigger the game over screen, False to disable it.
         self.game_over_screen = game_over.GameOver(self)#class for the game over screen, which is defined in game_over.py
 
+        #battle view
+        self.battle = False#Variable to hold battle state. Set to True to trigger the battle view, False to disable it.
+        self.battle_screen = None
+        self.current_enemy = None
+        self.battleview = battleview.BattleScreen(self)
 
         #######Main Game Variables#######
         self.max_health = 10#max_health variable, could be changed throughout the game
@@ -87,6 +93,10 @@ class MyGame(arcade.Window):
         self.power = max(0, min(self.max_power, value))
         self.power_label.text = f"{self.power} / {self.max_power}"
 
+    def set_xp(self, value: int):
+        self.current_xp = max(0, value)
+        self.set_level_progress()
+        
     def set_level_progress(self):
         progress = self.current_xp / self.levelup
         if progress >= 1:
@@ -112,6 +122,9 @@ class MyGame(arcade.Window):
         if self.menu:#if the menu variable is true, draw the menu screen
             self.menu_screen.draw()#call the on_draw function from menu.py
 
+        if self.battle:
+            self.battleview.draw()#call the on_draw function from battle_view.py
+
         #draw the HUD, but not in the starting menu (not self.menu)
         if not self.menu:
             self.hud_ui.draw()#draw the HUD (health, etc.)
@@ -135,7 +148,10 @@ class MyGame(arcade.Window):
             self.menu_screen.enable()
             return 
         else:
-            self.game_over_screen.disable()#Disable the game over screen when the game is not over
+            self.menu_screen.disable()#Disable the game over screen when the game is not over
+
+        if self.health <= 0:#if the player's health is 0 or less, trigger the game over state
+            self.game_over = True
 
         #game over screen
         if self.game_over:#if the game is over, enable the game over screen and skip the rest of the update function
@@ -150,6 +166,13 @@ class MyGame(arcade.Window):
             return 
         else:
             self.pause_screen.disable()#Disable the pause screen when the game is not paused
+
+        if self.battle:#if the battle variable is true, enable the battle view and skip the rest of the update function
+            self.battleview.enable()
+            self.battleview.update(delta_time)
+            return
+        else:
+            self.battleview.disable()#Disable the battle view when the battle variable is false
 
 
         directions = playmov.calc_movement(self.player)
@@ -189,10 +212,6 @@ class MyGame(arcade.Window):
 
         key_handler.key_press(key)
 
-        #Check if the user hit the Esc key and toggle paused state
-        if key == arcade.key.ESCAPE and not self.game_over:#only allow pausing if the game is not over (not self.game_over)
-            self.paused = not self.paused
-
         #if the menu, paused or game over screen is active, pass the key press event to the corresponding .py file
         if self.menu:
             self.menu_screen.on_key_press(key, key_modifiers)
@@ -205,9 +224,32 @@ class MyGame(arcade.Window):
         if self.game_over:
             self.game_over_screen.on_key_press(key, key_modifiers)
             return
-    
-        if key == arcade.key.SPACE:###############################only for debugging, will be removed later, triggers the game over screen when space is pressed
+        
+        if key == arcade.key.ESCAPE and not self.game_over:#only allow pausing if the game is not over (not self.game_over)
+            self.paused = True
+            
+        if key == arcade.key.G:###############################only for debugging, will be removed later, triggers the game over screen when G is pressed
             self.game_over = not self.game_over
+            
+        if key == arcade.key.B:#################################only for debugging, will be removed later, triggers the battle view when B is pressed
+            #enemy data will be part of a class later
+            if not self.battle:        
+                enemy_data = {"max_hp": 30, "attack": 5, "red_time": 1.0, "xp_reward": 40, "coin_reward": 10}#########
+                self.battle = True
+                self.battleview.start_battle(enemy_data)
+                
+            else:
+                self.battle = False
+                self.battleview.disable()
+                
+            return
+            
+        if self.battle:
+            self.battleview.on_key_press(key, key_modifiers)
+            return
+    
+        
+        
         
 
     def on_key_release(self, key, key_modifiers):

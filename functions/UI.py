@@ -11,12 +11,12 @@ def setup_hud(self):
     self.hud_ui.add(self.hud_root)#always needs to be added to the UI Manager
 
     #number of panels, can be easily modified
-    panel_count = 4
-    panel_width = self.window_width / panel_count
+    #panel_count = 4
     panel_heights = 50
+    transparency = 100
 
     #colors for:       Health          Power          Level           Coins
-    panel_colors = [(241, 130, 136), (242, 171, 81), (98, 181, 231), (81, 198, 94)]
+    panel_colors = [(241, 130, 136, transparency), (242, 171, 81, transparency), (98, 181, 231, transparency), (81, 198, 94, transparency)]
     panel_weights = [1, 1, 2, 1]#weights for the panels, the level panel is bigger than the others, because it contains more information, can be easily modified
     total_weight = sum(panel_weights)
 
@@ -24,11 +24,9 @@ def setup_hud(self):
     self.level_panel = None#variable to store the level panel, which is needed to update the level progress bar
 
     #create panels for health, power, level and coins, the width is calculated based on the weights, so that the level panel is bigger than the others
-    for i, (color, weight) in enumerate(zip(panel_colors, panel_weights)):
-
-        panel_width = self.window_width * (weight / total_weight)
-
-        panel = arcade.gui.UISpace(width=panel_width, height=panel_heights, color=color)
+    for i, (color, weight) in enumerate(zip(panel_colors, panel_weights)): 
+        panel_width = self.window_width * (weight / total_weight) 
+        panel = arcade.gui.UISpace(width=panel_width, height=panel_heights, color=color) 
         self.hud_root.add(panel, anchor_x="left", anchor_y="top", align_x=current_x, align_y=0)
 
         if i == 0:#Health-Panel
@@ -71,8 +69,8 @@ def setup_hud(self):
     self.hud_root.add(self.level_row, anchor_x="left", anchor_y="top", align_x=self.level_panel_x + 10, align_y=-8)
     self.level_row.add(arcade.gui.UIImage(texture=arcade.load_texture("assets/cugarglaze.png"), width=35, height=35))
 
-    self.level_bar_bg = arcade.gui.UISpace(width=self.level_panel_width - 60, height=20, color=(24, 117, 168))#bit darker than the level panel
-    self.level_bar_fill = arcade.gui.UISpace(width=0, height=20, color=(251, 245, 219))
+    self.level_bar_bg = arcade.gui.UISpace(width=self.level_panel_width - 60, height=20, color=(24, 117, 168, transparency))#bit darker than the level panel
+    self.level_bar_fill = arcade.gui.UISpace(width=0, height=20, color=(251, 245, 219, transparency))
     self.hud_root.add(self.level_bar_bg, anchor_x="left", anchor_y="top", align_x=self.level_panel_x + 50, align_y=-15)
     self.hud_root.add(self.level_bar_fill, anchor_x="left", anchor_y="top", align_x=self.level_panel_x + 50, align_y=-15)
 
