@@ -29,9 +29,13 @@ class Entity(arcade.Sprite):
 
 class NPC(Entity):
 
-    def __init__(self, x, y, scale, file):
+    def __init__(self, x, y, scale, file, collision_function = "combat"):
         super().__init__(x, y, scale, file)
+        self.collision_function = collision_function
     
+    def collision(self):
+        print(self.collision_function)
+
     #Used to convert an arcade.Sprite object to an NPC object
     @classmethod
     def from_sprite(cls, sprite):
@@ -45,6 +49,8 @@ class NPC(Entity):
 
         obj.center_x = sprite.center_x
         obj.center_y = sprite.center_y
+        
+        obj.collision_function = sprite.properties["collision_function"]
 
         obj.dialogue = sprite.properties.get("dialogue", "")
 

@@ -194,6 +194,9 @@ class MyGame(arcade.Window):
         directions["y"] *= self.y_scale
         playmov.move_player(self.player, directions, self.scene["Obstacles"])
         
+        collision_entity = colls.coll_check(self.player, self.entity_list)
+        if collision_entity:
+            collision_entity.collision()
 
         collision = screen_logic.check_collisions(self.player, self.edge_list)
         if collision: #if the player is sufficiently out of the screen to go to the next one
