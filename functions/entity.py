@@ -1,5 +1,6 @@
 import arcade
 import functions.settings as settings
+import functions.dialogue_interface as dia_int
 import json
 
 class Entity(arcade.Sprite):
@@ -71,9 +72,9 @@ class NPC(Entity):
         return obj
     
 
-    def collision(self):
+    def collision(self, game):
         if self.on_collision == "dialogue":
-            print(self.dialogue)
+            game.dialogue_box = dia_int.speech_box(self, game.either_scale, game)
             self.on_collision = "nothing"
 
     

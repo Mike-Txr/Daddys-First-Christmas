@@ -54,6 +54,9 @@ class MyGame(arcade.Window):
         self.current_enemy = None
         self.battleview = battleview.BattleScreen(self)
 
+        #Dialogue Interface
+        self.current_dialogue = False
+
         #######Main Game Variables#######
         self.max_health = 10#max_health variable, could be changed throughout the game
         self.health = self.max_health#current health variable, starts with max health
@@ -132,7 +135,7 @@ class MyGame(arcade.Window):
         # Call draw() on all your sprite lists below
         self.scene.draw(pixelated=True)
 
-        if hasattr(self, "dialogue_box"): #Check if there is currently a dialogue_box to be drawn
+        if self.current_dialogue: #Check if there is currently a dialogue_box to be drawn
             self.dialogue_box.draw() #Call the draw method on it (from the speech_box class in dialogue_interface.py)
 
         if self.menu:#if the menu variable is true, draw the menu screen
@@ -190,6 +193,8 @@ class MyGame(arcade.Window):
         else:
             self.battleview.disable()#Disable the battle view when the battle variable is false
 
+        if self.current_dialogue: #if there is currently a dialogue_box
+            return #skip the rest of on_update() so the game is paused
 
         directions = playmov.calc_movement(self.player)
         directions["x"] *= self.x_scale
@@ -198,7 +203,7 @@ class MyGame(arcade.Window):
         
         collision_entity = colls.coll_check(self.player, self.entity_list, True)
         if collision_entity:
-            collision_entity.collision()
+            collision_entity.collision(self)
 
         collision = screen_logic.check_collisions(self.player, self.edge_list)
         if collision: #if the player is sufficiently out of the screen to go to the next one
@@ -229,53 +234,12 @@ class MyGame(arcade.Window):
         Called whenever a key on the keyboard is pressed.
         """
 
-        #if the menu, paused or game over screen is active, pass the key press event to the corresponding .py file
-        if self.menu:
-            self.menu_screen.on_key_press(key, key_modifiers)
-            return
         
-        if self.paused:
-            self.pause_screen.on_key_press(key, key_modifiers)
-            return
-        
-        if self.game_over:
-            self.game_over_screen.on_key_press(key, key_modifiers)
-            return
-        
-
-        
-        key_handler.key_press(key, self)
+        key_handler.key_press(key, key_modifiers,self)
 
 
 
 
-        if key == arcade.key.ESCAPE and not self.game_over:#only allow pausing if the game is not over (not self.game_over)
-            self.paused = True
-            
-        if key == arcade.key.G:###############################only for debugging, will be removed later, triggers the game over screen when G is pressed
-            self.game_over = not self.game_over
-            
-        if key == arcade.key.B:#################################only for debugging, will be removed later, triggers the battle view when B is pressed
-            #enemy data will be part of a class later
-            if not self.battle:
-                enemy_data = {"max_hp": 50, "attack": 5, "red_time": 1.0, "xp_reward": 10, "coin_reward": 10}#########
-                self.battle = True
-                self.battleview.start_battle(enemy_data)
-                
-            else:
-                self.battle = False
-                self.battleview.disable()
-                
-            return
-            
-        if self.battle:
-            self.battleview.on_key_press(key, key_modifiers)
-            return
-        
-
-    
-        
-        
         
 
     def on_key_release(self, key, key_modifiers):

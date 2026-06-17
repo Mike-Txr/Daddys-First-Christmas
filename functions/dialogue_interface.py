@@ -4,17 +4,34 @@ import textwrap
 import functions.settings as settings
 
 class speech_box():
-    def __init__(self, entity, scale):
+    def __init__(self, entity, scale, game):
 
         wid = settings.INGAME_WIDTH * scale
         hei = settings.INGAME_HEIGHT * scale
 
+        self.game = game
+        self.game.current_dialogue = True
 
         self.entity = entity
 
 
         self.line = 0
         self.lines = entity.dialogue
+        self.lines_amount = len(self.lines)
+
+        combat = False
+        if self.lines[0] == "combat":
+            enemy_data = {"max_hp": self.entity.max_hp,
+                          "attack": self.entity.attack,
+                          "red_time": self.entity.red_time,
+                          "xp_reward": self.entity.xp_reward,
+                          "coin_reward": self.entity.coin_reward}
+            game.battle = True
+            game.battleview.start_battle(enemy_data)
+            combat = True
+            
+            
+
         self.current_text = self.lines[0][1]
         self.visible_characters = 0 #amount of characters that should currently be visible (for a typewriter effect)
         self.current_speaker = self.lines[0][0]
@@ -57,16 +74,40 @@ class speech_box():
             height = box_height
         )
 
+        if combat:
+            self.next_line(game)
 
 
-    def next_line(self):
-        self.line += 1
 
-        self.current_displayed_text = self.lines[self.line][1]
-        self.current_speaker = self.lines[self.line][0]
-        
+    def next_line(self, game):
+        if self.line < self.lines_amount - 1:
+            self.line += 1
 
-        self.visible_characters = 0
+            if self.lines[self.line] == "combat":
+                enemy_data = {"max_hp": self.entity.max_hp,
+                              "attack": self.entity.attack,
+                              "red_time": self.entity.red_time,
+                              "xp_reward": self.entity.xp_reward,
+                              "coin_reward": self.entity.coin_reward}
+                game.battle = True
+                game.battleview.start_battle(enemy_data)
+            
+            else:
+                self.current_displayed_text = self.lines[self.line][1]
+                self.current_speaker = self.lines[self.line][0]
+                
+                self.text_object.text = "\n".join(
+                    textwrap.wrap(
+                        self.current_displayed_text,
+                        width=97,
+                        break_long_words=False,
+                        break_on_hyphens=False
+                    )
+                )
+
+                self.visible_characters = 0
+        else:
+            self.kill()
     
     def draw(self):
 
@@ -85,4 +126,8 @@ class speech_box():
 
         if self.current_speaker == "NPC":
             self.NPC_icon_list.draw(pixelated=True)
+
+    def kill(self):
+        self.game.current_dialogue = False
+        self.game.dialogue_box = None
     
