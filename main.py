@@ -101,12 +101,10 @@ class MyGame(arcade.Window):
     def set_xp(self, value: int):
         self.current_xp = max(0, value)
 
-        leveled_up = False
 
         while self.current_xp >= self.levelup:
             self.current_xp -= self.levelup
             self.level += 1
-            leveled_up = True
             print("Level up! Aktuelles Level:", self.level)
         
         if self.level > 0:
