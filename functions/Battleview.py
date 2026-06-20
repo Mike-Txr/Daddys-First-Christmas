@@ -54,6 +54,7 @@ class BattleScreen:
             game=self.game,
             button_texts=["Standard-Attack", "Power-Attacks", "Items"],
             callbacks=[self.start_standard_attack, self.open_power_menu, self.open_items_menu],
+            allow_space=False,
         )
         self.action_menu.disable()
 
