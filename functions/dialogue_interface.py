@@ -5,9 +5,11 @@ import functions.settings as settings
 
 class speech_box():
     def __init__(self, entity, scale, game):
+        
+        self.scale = scale
 
-        wid = settings.INGAME_WIDTH * scale
-        hei = settings.INGAME_HEIGHT * scale
+        wid = settings.INGAME_WIDTH * self.scale
+        hei = settings.INGAME_HEIGHT * self.scale
 
         self.game = game
         self.game.current_dialogue = True
@@ -82,6 +84,8 @@ class speech_box():
             height = box_height
         )
 
+        
+
         if combat:
             self.next_line(game)
 
@@ -119,6 +123,9 @@ class speech_box():
     
     def draw(self):
 
+        wid = settings.INGAME_WIDTH * self.scale
+        hei = settings.INGAME_HEIGHT * self.scale
+
         arcade.draw_rect_filled(
             self.text_box,
             (255, 255, 255, 150)
@@ -128,6 +135,13 @@ class speech_box():
             self.text_box,
             (0, 0, 0, 255),
             border_width = 5
+        )
+
+        arcade.draw_triangle_filled(
+            wid * 0.8625, hei * 0.08,
+            wid * 0.8875, hei * 0.08,
+            wid * 0.875, hei * 0.065,
+            arcade.color.RED
         )
 
         self.text_object.draw()
