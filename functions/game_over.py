@@ -7,10 +7,10 @@ class GameOver:#class for the Buttons
         self.game = game#is used to access the main game class
 
         #load manager and UIBox
-        self.manager = arcade.gui.UIManager()
-        self.v_box = arcade.gui.UIBoxLayout()
+        self.manager = arcade.gui.UIManager()#contains all the UI elements, which are drawn in the draw function, can be enabled and disabled
+        self.v_box = arcade.gui.UIBoxLayout()#v_box is used to arrange the buttons vertically, which is added to the manager in the draw function
 
-        #Dimensions of the center
+        #Dimensions of the center (for easier use in the draw function)
         center_x = self.game.window_width / 2
         center_y = self.game.window_height / 2
 
@@ -23,14 +23,14 @@ class GameOver:#class for the Buttons
         self.arrow.center_x = 0
         self.arrow.center_y = 0
 
-        #create buttons
+        #create all the buttons
         self.restart_button = arcade.gui.UIFlatButton(text="Restart", width=200)
         self.quit_button = arcade.gui.UIFlatButton(text="Quit", width=200)
 
         self.buttons = [self.restart_button, self.quit_button]#list for the arrow to know which button is selected
         self.selected_index = 0#index, used to keep track of which button is selected, starts with the first button (Restart)
 
-        #events for the buttons (mouse click), which calls the activate_selected function
+        #events for the buttons (mouse click), which calls the activate_selected function (basically just sets the self.selected_index to the corresponding button and calls the activate_selected function)
         @self.restart_button.event("on_click")
         def _(event):
             self.selected_index = 0
@@ -51,7 +51,7 @@ class GameOver:#class for the Buttons
         self.anchor.add(anchor_x="center_x", anchor_y="center_y", child=self.v_box)
         self.manager.add(self.anchor)
 
-        #Game over text
+        #insert Game over text
         self.text_gameover = arcade.Text(
             "GAME OVER",
             center_x,
@@ -104,7 +104,8 @@ class GameOver:#class for the Buttons
         self.text_gameover.draw()
         self.manager.draw()
 
-    #functions to enable and disable the manager, which is used to handle the events for the buttons
+    #functions to enable and disable the manager, which are called in the main update function when the menu variable is true or false
+    #very important, because the manager handles the events for the buttons, which are only needed when the menu is active    
     def enable(self):
         self.manager.enable()
 

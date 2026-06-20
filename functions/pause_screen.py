@@ -8,15 +8,15 @@ class PauseScreen:#class for the Buttons
         self.show_controls = False#Variable to show the controls screen, which is handled in the main game loop in the on_draw function
 
         #load manager and UIBox
-        self.manager = arcade.gui.UIManager()
-        self.controls_manager = arcade.gui.UIManager()
-        self.v_box = arcade.gui.UIBoxLayout()
+        self.manager = arcade.gui.UIManager()#contains all the UI elements, which are drawn in the draw function, can be enabled and disabled
+        self.controls_manager = arcade.gui.UIManager()#contains just the controls screen, but with its own manager, so it can be easily shown and hidden
+        self.v_box = arcade.gui.UIBoxLayout()#v_box is used to arrange the buttons vertically, which is added to the manager in the draw function
 
-        #Dimensions of the center
+        #Dimensions of the center (for easier use in the draw function)
         center_x = self.game.window_width / 2
         center_y = self.game.window_height / 2
 
-        #controls
+        #load controls image
         self.controls_texture = arcade.load_texture("assets/controls.png")
 
         #Arrow (realised with a sprite, which is rotated to point to the selected button)
@@ -28,7 +28,7 @@ class PauseScreen:#class for the Buttons
         self.arrow.center_x = 0
         self.arrow.center_y = 0
         
-        #create buttons
+        #create all the buttons
         self.continue_button = arcade.gui.UIFlatButton(text="Continue", width=200)
         self.restart_button = arcade.gui.UIFlatButton(text="Restart", width=200)
         self.controls_button = arcade.gui.UIFlatButton(text="Controls", width=200)
@@ -37,7 +37,7 @@ class PauseScreen:#class for the Buttons
         self.buttons = [self.continue_button, self.restart_button, self.controls_button, self.quit_button]#list for the arrow to know which button is selected
         self.selected_index = 0#index, used to keep track of which button is selected, starts with the first button (Continue)
 
-        #events for the buttons (mouse click), which calls the activate_selected function
+        #events for the buttons (mouse click), which calls the activate_selected function (basically just sets the self.selected_index to the corresponding button and calls the activate_selected function)
         @self.continue_button.event("on_click")
         def _(event):
             self.selected_index = 0
@@ -67,10 +67,11 @@ class PauseScreen:#class for the Buttons
         self.v_box.add(arcade.gui.UISpace(height=20))
         self.v_box.add(self.quit_button)
 
-        #anchor layout to position the buttons in the center of the screen
+        #anchors, used to position the buttons in the center of the screen, which is added to the manager
         self.anchor = arcade.gui.UIAnchorLayout()
         self.controls_anchor = arcade.gui.UIAnchorLayout()
 
+        #put controls image in the controls anchor
         self.controls_img = arcade.gui.UIImage(
             texture=self.controls_texture,
             width=self.game.window_width,
@@ -80,11 +81,10 @@ class PauseScreen:#class for the Buttons
 
         self.anchor.add(self.v_box, anchor_x="center_x", anchor_y="center_y")
 
-        
         self.manager.add(self.anchor)
         self.controls_manager.add(self.controls_anchor)
 
-        #Paused text
+        #insert "PAUSED" text
         self.text_paused = arcade.Text(
             "PAUSED",
             center_x,
@@ -130,7 +130,7 @@ class PauseScreen:#class for the Buttons
 
     #funciton to draw the paused screen, which is called in the main game loop when the paused screen is active
     def draw(self):
-        #draw rectangle over the whole screen
+        #draw rectangle over the whole screen (transparent)
         arcade.draw_lrbt_rectangle_filled(
             0,
             self.game.window_width,
@@ -150,12 +150,16 @@ class PauseScreen:#class for the Buttons
         self.text_paused.draw()
         self.manager.draw()
 
+        #if flag for it is set, draw control screen
         if self.show_controls:
             self.controls_manager.draw()
 
-    #functions to enable and disable the manager, which is used to handle the events for the buttons
+    #functions to enable and disable the manager, which are called in the main update function when the menu variable is true or false
+    #very important, because the manager handles the events for the buttons, which are only needed when the menu is active
     def enable(self):
         self.manager.enable()
+        self.controls_manager.enable()
 
     def disable(self):
         self.manager.disable()
+        self.controls_manager.disable()

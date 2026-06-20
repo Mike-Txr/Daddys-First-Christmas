@@ -7,10 +7,10 @@ class Menu:#class for the Buttons
         self.game = game#is used to access the main game class
 
         #load manager and UIBox
-        self.manager = arcade.gui.UIManager()
-        self.v_box = arcade.gui.UIBoxLayout()
+        self.manager = arcade.gui.UIManager()#contains all the UI elements, which are drawn in the draw function, can be enabled and disabled
+        self.v_box = arcade.gui.UIBoxLayout()#v_box is used to arrange the buttons vertically, which is added to the manager in the draw function
 
-        #Dimensions of the center
+        #Dimensions of the center (for easier use in the draw function)
         center_x = self.game.window_width / 2
         center_y = self.game.window_height / 2
 
@@ -27,7 +27,7 @@ class Menu:#class for the Buttons
         self.arrow.center_x = 0
         self.arrow.center_y = 0
 
-        #create buttons
+        #create all the buttons
         self.start_button = arcade.gui.UIFlatButton(text="Start Daddys Adventure", width=200)
         self.github_button = arcade.gui.UIFlatButton(text="View on GitHub", width=200)
         self.quit_button = arcade.gui.UIFlatButton(text="Quit", width=200)
@@ -35,7 +35,7 @@ class Menu:#class for the Buttons
         self.buttons = [self.start_button, self.github_button, self.quit_button]#list for the arrow to know which button is selected
         self.selected_index = 0#index, used to keep track of which button is selected, starts with the first button (Start)
 
-        #events for the buttons (mouse click), which calls the activate_selected function
+        #events for the buttons (mouse click), which calls the activate_selected function (basically just sets the self.selected_index to the corresponding button and calls the activate_selected function)
         @self.start_button.event("on_click")
         def _(event):
             self.selected_index = 0
@@ -58,9 +58,10 @@ class Menu:#class for the Buttons
         self.v_box.add(arcade.gui.UISpace(height=20))
         self.v_box.add(self.quit_button)
 
-        #anchor layout to position the buttons in the center of the screen
+        #anchor, used to position the buttons in the center of the screen, which is added to the manager
         self.anchor = arcade.gui.UIAnchorLayout()
 
+        #put background and logo in the anchor layout
         self.back_img = arcade.gui.UIImage(
             texture=self.background_texture,
             width=self.game.window_width,
@@ -78,7 +79,7 @@ class Menu:#class for the Buttons
         self.anchor.add(self.v_box, anchor_x="center_x", anchor_y="center_y")
         self.manager.add(self.anchor)
 
-        #text by the creators
+        #insert text for the credits in the bottom left corner
         self.text_by = arcade.Text(
             "A Game by\n    Mike-Txr\n    FinjaAT\n    Matejastinkt",
             center_x - 600,
@@ -109,7 +110,7 @@ class Menu:#class for the Buttons
             self.game.setup()
 
         elif self.selected_index == 1:
-            import webbrowser
+            import webbrowser#library for opening websites (always the default browser of the user)
             webbrowser.open("https://github.com/Mike-Txr/ProjectOlex")##############################################link will probably change
 
         elif self.selected_index == 2:
@@ -117,20 +118,20 @@ class Menu:#class for the Buttons
 
     #function to draw the menu screen, which is called in the main game loop when the menu variable is true
     def draw(self):
-        self.manager.draw()
-
         #draw the arrow next to the selected button, the position is updated based on the selected_index
         for i, button in enumerate(self.buttons):
             if i == self.selected_index:
                 self.arrow.center_x = button.center_x - (button.width / 2) - (self.arrow.width / 2) - 20
                 self.arrow.center_y = button.center_y
 
-        #draw everything
+        #draw everything 
+        self.manager.draw()
         self.ui_sprites.draw()
         self.text_by.draw()
         
 
     #functions to enable and disable the manager, which are called in the main update function when the menu variable is true or false
+    #very important, because the manager handles the events for the buttons, which are only needed when the menu is active
     def enable(self):
         self.manager.enable()
 
