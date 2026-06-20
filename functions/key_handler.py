@@ -23,7 +23,7 @@ def key_press(key, key_modifiers, game):
         return
         
     if game.current_dialogue:
-        if key == arcade.key.SPACE:
+        if key == arcade.key.DOWN:
             game.dialogue_box.next_line(game)
     
 
