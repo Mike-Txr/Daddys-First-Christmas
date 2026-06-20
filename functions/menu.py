@@ -14,9 +14,13 @@ class Menu:#class for the Buttons
         center_x = self.game.window_width / 2
         center_y = self.game.window_height / 2
 
+        #load background and Logo
+        self.background_texture = arcade.load_texture("assets/main_background.png")
+        self.logo_texture = arcade.load_texture("assets/LOGO.png")
+
         #Arrow (realised with a spirte, which is rotated to point to the selected button)
         self.ui_sprites = arcade.SpriteList()
-        self.arrow = arcade.Sprite("assets/arrow.png", scale=0.1)
+        self.arrow = arcade.Sprite("assets/arrow_black.png", scale=0.1)
         self.ui_sprites.append(self.arrow)
 
         #initial position of the arrow, will be updated in the draw function
@@ -56,25 +60,30 @@ class Menu:#class for the Buttons
 
         #anchor layout to position the buttons in the center of the screen
         self.anchor = arcade.gui.UIAnchorLayout()
-        self.anchor.add(anchor_x="center_x", anchor_y="center_y", child=self.v_box)
-        self.manager.add(self.anchor)
 
-        #Place holder, will probably be a logo#####################################
-        self.text_menu = arcade.Text(
-            "Daddys first christmas",
-            center_x,
-            center_y + 150,
-            arcade.color.WHITE,
-            60,
-            anchor_x="center"
+        self.back_img = arcade.gui.UIImage(
+            texture=self.background_texture,
+            width=self.game.window_width,
+            height=self.game.window_height
         )
+        self.anchor.add(self.back_img, anchor_x="center", anchor_y="center")
+
+        self.logo_img = arcade.gui.UIImage(
+            texture=self.logo_texture,
+            width=905,
+            height=51
+        )
+        self.anchor.add(self.logo_img, anchor_x="center", anchor_y="top", align_y=-100)
+
+        self.anchor.add(self.v_box, anchor_x="center_x", anchor_y="center_y")
+        self.manager.add(self.anchor)
 
         #text by the creators
         self.text_by = arcade.Text(
             "A Game by\n    Mike-Txr\n    FinjaAT\n    Matejastinkt",
             center_x - 600,
             center_y - 300,
-            arcade.color.WHITE,
+            arcade.color.BLACK,
             20,
             multiline=True,
             width=300,
@@ -108,14 +117,7 @@ class Menu:#class for the Buttons
 
     #function to draw the menu screen, which is called in the main game loop when the menu variable is true
     def draw(self):
-        #draw rectangel#################################will be art
-        arcade.draw_lrbt_rectangle_filled(
-            0,
-            self.game.window_width,
-            0,
-            self.game.window_height,
-            arcade.color.GREEN
-        )
+        self.manager.draw()
 
         #draw the arrow next to the selected button, the position is updated based on the selected_index
         for i, button in enumerate(self.buttons):
@@ -125,9 +127,8 @@ class Menu:#class for the Buttons
 
         #draw everything
         self.ui_sprites.draw()
-        self.text_menu.draw()
         self.text_by.draw()
-        self.manager.draw()
+        
 
     #functions to enable and disable the manager, which are called in the main update function when the menu variable is true or false
     def enable(self):
