@@ -5,14 +5,19 @@ import arcade.gui
 class PauseScreen:#class for the Buttons
     def __init__(self, game):
         self.game = game#is used to access the main game class
+        self.show_controls = False#Variable to show the controls screen, which is handled in the main game loop in the on_draw function
 
         #load manager and UIBox
         self.manager = arcade.gui.UIManager()
+        self.controls_manager = arcade.gui.UIManager()
         self.v_box = arcade.gui.UIBoxLayout()
 
         #Dimensions of the center
         center_x = self.game.window_width / 2
         center_y = self.game.window_height / 2
+
+        #controls
+        self.controls_texture = arcade.load_texture("assets/controls.png")
 
         #Arrow (realised with a sprite, which is rotated to point to the selected button)
         self.ui_sprites = arcade.SpriteList()
@@ -26,9 +31,10 @@ class PauseScreen:#class for the Buttons
         #create buttons
         self.continue_button = arcade.gui.UIFlatButton(text="Continue", width=200)
         self.restart_button = arcade.gui.UIFlatButton(text="Restart", width=200)
+        self.controls_button = arcade.gui.UIFlatButton(text="Controls", width=200)
         self.quit_button = arcade.gui.UIFlatButton(text="Quit", width=200)
 
-        self.buttons = [self.continue_button, self.restart_button, self.quit_button]#list for the arrow to know which button is selected
+        self.buttons = [self.continue_button, self.restart_button, self.controls_button, self.quit_button]#list for the arrow to know which button is selected
         self.selected_index = 0#index, used to keep track of which button is selected, starts with the first button (Continue)
 
         #events for the buttons (mouse click), which calls the activate_selected function
@@ -41,10 +47,15 @@ class PauseScreen:#class for the Buttons
         def _(event):
             self.selected_index = 1
             self.activate_selected()
+    
+        @self.controls_button.event("on_click")
+        def _(event):
+            self.selected_index = 2
+            self.activate_selected()
 
         @self.quit_button.event("on_click")
         def _(event):
-            self.selected_index = 2
+            self.selected_index = 3
             self.activate_selected()
 
         #create layout of the buttons
@@ -52,18 +63,32 @@ class PauseScreen:#class for the Buttons
         self.v_box.add(arcade.gui.UISpace(height=20))
         self.v_box.add(self.restart_button)
         self.v_box.add(arcade.gui.UISpace(height=20))
+        self.v_box.add(self.controls_button)
+        self.v_box.add(arcade.gui.UISpace(height=20))
         self.v_box.add(self.quit_button)
 
         #anchor layout to position the buttons in the center of the screen
         self.anchor = arcade.gui.UIAnchorLayout()
-        self.anchor.add(anchor_x="center_x", anchor_y="center_y", child=self.v_box)
+        self.controls_anchor = arcade.gui.UIAnchorLayout()
+
+        self.controls_img = arcade.gui.UIImage(
+            texture=self.controls_texture,
+            width=self.game.window_width,
+            height=self.game.window_height
+        )
+        self.controls_anchor.add(self.controls_img, anchor_x="center", anchor_y="center")
+
+        self.anchor.add(self.v_box, anchor_x="center_x", anchor_y="center_y")
+
+        
         self.manager.add(self.anchor)
+        self.controls_manager.add(self.controls_anchor)
 
         #Paused text
         self.text_paused = arcade.Text(
             "PAUSED",
             center_x,
-            center_y + 150,
+            center_y + 200,
             arcade.color.WHITE,
             60,
             anchor_x="center"
@@ -73,17 +98,20 @@ class PauseScreen:#class for the Buttons
     #Keyboard events to navigate through the buttons, which also calls the activate_selected function when the enter key is pressed
     def on_key_press(self, symbol, modifiers):
         #the corresponding keys for navigating through the buttons, W and UP for up, S and DOWN for down, ENTER and RETURN to activate the selected button
-        if symbol in (arcade.key.W, arcade.key.UP):
+        if symbol in (arcade.key.W, arcade.key.UP) and not self.show_controls:
             self.selected_index = (self.selected_index - 1) % len(self.buttons)
 
-        elif symbol in (arcade.key.S, arcade.key.DOWN):
+        elif symbol in (arcade.key.S, arcade.key.DOWN) and not self.show_controls:
             self.selected_index = (self.selected_index + 1) % len(self.buttons)
 
-        elif symbol in (arcade.key.ENTER, arcade.key.RETURN):
+        elif symbol in (arcade.key.ENTER, arcade.key.RETURN) and not self.show_controls:
             self.activate_selected()
 
         elif symbol == arcade.key.ESCAPE and not self.game.game_over:#only allow pausing if the game is not over (not self.game_over)
-            self.game.paused = not self.game.paused
+            if self.show_controls:
+                self.show_controls = False#close the controls screen if it is open
+            else:
+                self.game.paused = not self.game.paused
     
     #function to activate the selected button and either continue, restart or quit
     def activate_selected(self):
@@ -95,6 +123,9 @@ class PauseScreen:#class for the Buttons
             self.game.setup()#call setup = always equals restart
 
         elif self.selected_index == 2:
+            self.show_controls = True#show the controls screen, which is handled in the main game loop in the on_draw function
+
+        elif self.selected_index == 3:
             arcade.exit()#close game
 
     #funciton to draw the paused screen, which is called in the main game loop when the paused screen is active
@@ -118,6 +149,9 @@ class PauseScreen:#class for the Buttons
         self.ui_sprites.draw()
         self.text_paused.draw()
         self.manager.draw()
+
+        if self.show_controls:
+            self.controls_manager.draw()
 
     #functions to enable and disable the manager, which is used to handle the events for the buttons
     def enable(self):

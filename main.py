@@ -43,7 +43,7 @@ class MyGame(arcade.Window):
         #Pause menu
         self.paused = False#Variable to hold paused state. Set to True to pause the game, False to unpause.
         self.pause_screen = pause_screen.PauseScreen(self)#class for the pause menu, which is defined in pause_screen.py
-        
+
         #Game over screen
         self.game_over = False#Variable to hold game over state. Set to True to trigger the game over screen, False to disable it.
         self.game_over_screen = game_over.GameOver(self)#class for the game over screen, which is defined in game_over.py
@@ -95,10 +95,10 @@ class MyGame(arcade.Window):
         #draw the HUD, but not in the starting menu (not self.menu)
         if not self.menu:
             self.hud_ui.draw()#draw the HUD (health, etc.)
-
-        if self.paused:#if the game is paused, draw the pause screen
-            self.pause_screen.draw()#call the on_draw function from pause_screen.py
         
+        if self.paused:#if the game is paused, draw the pause screen 
+            self.pause_screen.draw()#call the on_draw function from pause_screen.py
+
         if self.game_over:#if the game is over, draw the game over screen#############################Game over trigger --> game_over = True
             self.game_over_screen.draw()#call the on_draw function from game_over.py
 
