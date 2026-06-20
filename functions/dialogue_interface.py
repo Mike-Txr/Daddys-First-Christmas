@@ -36,11 +36,19 @@ class speech_box():
         self.visible_characters = 0 #amount of characters that should currently be visible (for a typewriter effect)
         self.current_speaker = self.lines[0][0]
 
+        
         self.icon_sprite_NPC = arcade.Sprite(entity.texture, scale=scale)
         self.icon_sprite_NPC.center_x = wid * 0.142
         self.icon_sprite_NPC.center_y = hei * 0.275
         self.NPC_icon_list = arcade.SpriteList()
         self.NPC_icon_list.append(self.icon_sprite_NPC)
+        
+        self.icon_sprite_player = arcade.Sprite(game.player.dia_icon, scale=scale)
+        self.icon_sprite_player.center_x = wid * 0.142
+        self.icon_sprite_player.center_y = hei * 0.275
+        self.player_icon_list = arcade.SpriteList()
+        self.player_icon_list.append(self.icon_sprite_player)
+
 
         wrapped_text = "\n".join(
             textwrap.wrap(
@@ -91,21 +99,21 @@ class speech_box():
                               "coin_reward": self.entity.coin_reward}
                 game.battle = True
                 game.battleview.start_battle(enemy_data)
+                self.line += 1
             
-            else:
-                self.current_displayed_text = self.lines[self.line][1]
-                self.current_speaker = self.lines[self.line][0]
-                
-                self.text_object.text = "\n".join(
-                    textwrap.wrap(
-                        self.current_displayed_text,
-                        width=97,
-                        break_long_words=False,
-                        break_on_hyphens=False
-                    )
+            self.current_displayed_text = self.lines[self.line][1]
+            self.current_speaker = self.lines[self.line][0]
+            
+            self.text_object.text = "\n".join(
+                textwrap.wrap(
+                    self.current_displayed_text,
+                    width=97,
+                    break_long_words=False,
+                    break_on_hyphens=False
                 )
+            )
 
-                self.visible_characters = 0
+            self.visible_characters = 0
         else:
             self.kill()
     
@@ -126,6 +134,9 @@ class speech_box():
 
         if self.current_speaker == "NPC":
             self.NPC_icon_list.draw(pixelated=True)
+
+        elif self.current_speaker == "Player":
+            self.player_icon_list.draw(pixelated=True)
 
     def kill(self):
         self.game.current_dialogue = False

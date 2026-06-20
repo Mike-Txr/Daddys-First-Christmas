@@ -7,3 +7,4 @@ class Player(entity.Entity):
         super().__init__(x, y, scale, "player.png")
         self.center_x = x
         self.center_y = y
+        self.dia_icon = "assets/player_dia.png"

@@ -1,8 +1,10 @@
 [
     ["NPC", "Hello!"],
     ["Player", "How are you?"],
+    ["NPC", "I'm very angry so I'm going to attack you now you idiot"],
     
     "combat",
 
-    ["NPC", "Goodbye."]
+    ["NPC", "okay nice fight bye"],
+    ["Player", "bye"]
 ]
