@@ -5,11 +5,13 @@ import arcade
 current_pressed = []
 
 
-def key_press(key, key_modifiers, game):
-    current_pressed.append(key)
+def key_press(key, key_modifiers, game): #function to handle all key press events
+
+    current_pressed.append(key) #add the pressed key to the list of currently pressed keys (used for player movement)
 
 
-     #if the menu, paused or game over screen is active, pass the key press event to the corresponding .py file
+    #if the menu, paused or game over screen is active, pass the key press event to the corresponding .py file
+
     if game.menu:
         game.menu_screen.on_key_press(key, key_modifiers)
         return
@@ -21,7 +23,8 @@ def key_press(key, key_modifiers, game):
     if game.game_over:
         game.game_over_screen.on_key_press(key, key_modifiers)
         return
-        
+
+    #if there is an active dialogue, check for the arrow down key and hand it to the dialogue_box object (class: dialogue_interface.speech_box)  
     if game.current_dialogue:
         if key == arcade.key.DOWN:
             game.dialogue_box.next_line(game)
@@ -45,14 +48,15 @@ def key_press(key, key_modifiers, game):
             game.battleview.disable()
             
         return
-        
+
+    #pass key to the battleview file if there is currently an active battle    
     if game.battle:
         game.battleview.on_key_press(key, key_modifiers)
         return
         
 
-def key_release(key):
+def key_release(key): #function to handle key release events
     try:
-        current_pressed.remove(key)
+        current_pressed.remove(key) #remove the released key from currently pressed keys list
     except:
         pass
