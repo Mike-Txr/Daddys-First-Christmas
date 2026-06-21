@@ -6,6 +6,7 @@ import functions.player as player
 import functions.player_movement as playmov
 import functions.pause_screen as pause_screen
 import functions.game_over as game_over
+import functions.items_screen as items_screen
 import functions.menu as menu
 import functions.key_handler as key_handler
 import functions.screen_logic as screen_logic
@@ -53,7 +54,7 @@ class MyGame(arcade.Window):
         self.battle_screen = None
         self.current_enemy = None
         self.battleview = battleview.BattleScreen(self)
-
+        
         #Dialogue Interface
         self.current_dialogue = False
         self.current_screen = "TestMap.tmx"
@@ -65,6 +66,9 @@ class MyGame(arcade.Window):
             self.either_scale,
             self
         )
+
+        #items screen
+        self.items_screen = items_screen.ItemsScreen(self)
 
         misc.load_scene(self, self.current_screen)
 
@@ -96,6 +100,9 @@ class MyGame(arcade.Window):
         if not self.menu:
             self.hud_ui.draw()#draw the HUD (health, etc.)
         
+        if self.items_screen.show_items:
+            self.items_screen.draw()
+
         if self.paused:#if the game is paused, draw the pause screen 
             self.pause_screen.draw()#call the on_draw function from pause_screen.py
 
@@ -141,6 +148,10 @@ class MyGame(arcade.Window):
         else:
             self.battleview.disable()#Disable the battle view when the battle variable is false
 
+        if self.items_screen.show_items:
+            self.items_screen.update(delta_time)
+            return
+        
         if self.current_dialogue: #if there is currently a dialogue_box
             return #skip the rest of on_update() so the game is paused
 

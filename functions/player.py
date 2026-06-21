@@ -27,6 +27,10 @@ class Player(entity.Entity):
 
         self.coins = 10#variable for coins, could be changed throughout the game
 
+        #"inventory"
+        self.sausages = 5#variable for sausages, fills up hearts
+        self.pills = 5#variable for pills, fills up power
+
     #function to set the health of the player, which also updates the health label
     def set_health(self, value: int):
         self.health = max(0, min(self.max_health, value))#health is set to the value, but it can't be lower than 0 or higher than max health
@@ -64,3 +68,35 @@ class Player(entity.Entity):
         self.coins = max(0, value)#does not have an upper limit
         if self.game is not None:
             self.game.coins_label.text = f"{self.coins}"#update the coin label in the game, which shows the current coins of the player
+
+    #function to add sausages, which updates the sausage count
+    def add_sausage(self, amount: int = 1):
+        self.sausages = max(0, self.sausages + amount)
+        print(f"Added {amount} sausage(s). Total sausages: {self.sausages}")
+
+    #function to add pills, which updates the pill count
+    def add_pill(self, amount: int = 1):
+        self.pills = max(0, self.pills + amount)
+        print(f"Added {amount} pill(s). Total pills: {self.pills}")
+
+    #function to use a sausage to increase current health
+    def use_sausage(self, amount: int = 5):
+        if self.sausages <= 0:#if ther are no, cant be used
+            return False
+        if self.health >= self.max_health:#if the health is already full, cant be used
+            return False
+
+        self.sausages -= 1
+        self.set_health(self.health + amount)#value, can be easily modified
+        return True
+
+    #function to use a pill to increase current power, same as sausages but with power
+    def use_pill(self, amount: int = 10):
+        if self.pills <= 0:
+            return False
+        if self.power >= self.max_power:
+            return False
+
+        self.pills -= 1
+        self.set_power(self.power + amount)
+        return True

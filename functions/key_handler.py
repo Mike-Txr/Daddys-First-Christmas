@@ -21,7 +21,11 @@ def key_press(key, key_modifiers, game):
     if game.game_over:
         game.game_over_screen.on_key_press(key, key_modifiers)
         return
-        
+    
+    if game.items_screen.show_items:
+        game.items_screen.on_key_press(key, key_modifiers)
+        return
+    
     if game.current_dialogue:
         if key == arcade.key.DOWN:
             game.dialogue_box.next_line(game)
@@ -29,7 +33,18 @@ def key_press(key, key_modifiers, game):
 
     if key == arcade.key.ESCAPE and not game.game_over:#only allow pausing if the game is not over (not game.game_over)
             game.paused = True
-            
+
+    if key == arcade.key.I:
+        if game.menu or game.game_over or game.paused or game.battle or game.current_dialogue:
+            return
+
+        if game.items_screen.show_items:
+            game.items_screen.close_items()
+        else:
+            game.items_screen.open_items()
+
+        return 
+    
     if key == arcade.key.G:###############################only for debugging, will be removed later, triggers the game over screen when G is pressed
         game.game_over = not game.game_over
         

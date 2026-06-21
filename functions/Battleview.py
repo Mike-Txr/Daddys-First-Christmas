@@ -56,9 +56,9 @@ class BattleScreen:
 
         #All the power attacks and their data, can be easily modified
         self.power_attack_data = [
-            {"name": "Power Attack 1", "target": 7,  "min_damage": 8,  "max_damage": 14, "power_cost": 5},
-            {"name": "Power Attack 2", "target": 11, "min_damage": 10, "max_damage": 20, "power_cost": 8},
-            {"name": "Power Attack 3", "target": 15, "min_damage": 12, "max_damage": 28, "power_cost": 12},
+            {"name": "Wonster flood", "target": 7,  "min_damage": 8,  "max_damage": 14, "power_cost": 5},
+            {"name": "Wonster tsunami", "target": 11, "min_damage": 10, "max_damage": 20, "power_cost": 8},
+            {"name": "Wonster hurricane", "target": 15, "min_damage": 12, "max_damage": 28, "power_cost": 12},
         ]
 
         #call Battlemenu.py, a helper class to set up the basic layout of the battle (Standard-Attack, Power-Attacks, Items)
@@ -71,16 +71,23 @@ class BattleScreen:
         self.action_menu.disable()
 
         #again call Battlemenu.py, but this time for the power attacks submenu
+        power_button_texts = [
+            f"{data['name']}  ({data['power_cost']} Wonster)"
+            for data in self.power_attack_data
+        ]
+        power_button_texts.append("Back")
+
         self.power_menu = BattleMenu(
             game=self.game,
-            button_texts=["Power Attack 1", "Power Attack 2", "Power Attack 3", "Back"],
+            button_texts=power_button_texts,
             callbacks=[
-                lambda: self.choose_power_attack(0),
-                lambda: self.choose_power_attack(1),
-                lambda: self.choose_power_attack(2),
-                self.close_power_menu,
-            ],
-            escape_index=3,
+                lambda i=i: self.choose_power_attack(i)
+                for i in range(len(self.power_attack_data))
+            ] + [self.close_power_menu],
+            title_text="POWER ATTACKS",
+            subtitle_text="Choose an attack!",
+            button_width=400,
+            escape_index=len(self.power_attack_data),
         )
         self.power_menu.disable()
 
@@ -98,6 +105,38 @@ class BattleScreen:
             allow_space=False,
         )
         self.levelup_menu.disable()
+
+        self.sausage_texture = arcade.load_texture("assets/sausages.png")
+        self.pill_texture = arcade.load_texture("assets/pills.png")
+
+        self.current_item_texture = self.sausage_texture
+
+        self.item_preview = arcade.Sprite()
+        self.item_preview.texture = self.current_item_texture
+        self.item_preview.scale = 0.6
+        self.item_preview.center_x = self.game.window_width * 0.75
+        self.item_preview.center_y = self.game.window_height * 0.52
+
+        self.item_preview_list = arcade.SpriteList()
+        self.item_preview_list.append(self.item_preview)
+
+        self.item_heal_amount = 5
+        self.item_power_amount = 10
+
+        self.items_menu = BattleMenu(
+            game=self.game,
+            button_texts=["Sausages", "Pills", "Back"],
+            callbacks=[
+                lambda: self.use_item("sausages"),
+                lambda: self.use_item("pills"),
+                self.close_items_menu,
+            ],
+            title_text="ITEMS",
+            subtitle_text="",
+            escape_index=2,
+            allow_space=False,
+        )
+        self.items_menu.disable()
 
     #This function is called in the main game to start the battle, with all the enemy data passed as a dictionary
     def start_battle(self, enemy):
@@ -124,10 +163,12 @@ class BattleScreen:
         self.action_menu.reset()
         self.power_menu.reset()
         self.levelup_menu.reset()
+        self.items_menu.reset()
 
         self.action_menu.enable()
         self.power_menu.disable()
         self.levelup_menu.disable()
+        self.items_menu.disable()
 
         self.levelup_pending = False#levelup_pending is set to false, because the player has not leveled up yet
 
@@ -216,13 +257,6 @@ class BattleScreen:
         self.cue_time = 0.0
         self.green_active = False
 
-    def open_items_menu(self):#open items ---needs to be done---
-        if self.state != "player_turn":
-            return
-
-        # Platzhalter, kommt später
-        print("Items submenu kommt als nächstes")
-
     #when the player levels up, this function is called to apply the chosen stat increase, and then the battle is ended
     def apply_levelup_choice(self, choice_index):
         if not self.levelup_pending:
@@ -255,6 +289,67 @@ class BattleScreen:
         self.action_menu.disable()
         self.power_menu.disable()
         self.disable()
+
+    def refresh_items_menu(self):
+        self.items_menu.subtitle_text = (
+            f"Sausages: {self.game.player.sausages}   "
+            f"Pills: {self.game.player.pills}"
+        )
+
+    def update_item_preview(self, item_name: str):
+        if item_name == "sausages":
+            self.current_item_texture = self.sausage_texture
+        elif item_name == "pills":
+            self.current_item_texture = self.pill_texture
+
+        self.item_preview.texture = self.current_item_texture
+
+    def open_items_menu(self):
+        if self.state != "player_turn":
+            return
+
+        self.action_menu.disable()
+        self.power_menu.disable()
+
+        self.refresh_items_menu()
+        self.update_item_preview("sausages")
+        self.items_menu.reset()
+        self.items_menu.enable()
+
+    def close_items_menu(self):
+        self.items_menu.disable()
+        if self.state == "player_turn":
+            self.action_menu.enable()
+
+    def use_item(self, item_name):
+        if self.state != "player_turn" or not self.items_menu.enabled:
+            return
+
+        used = False
+
+        if item_name == "sausages":
+            used = self.game.player.use_sausage(self.item_heal_amount)
+            if used:
+                self.feedback_text = f"Used Sausage! +{self.item_heal_amount} HP"
+                self.feedback_timer = self.feedback_duration
+
+        elif item_name == "pills":
+            used = self.game.player.use_pill(self.item_power_amount)
+            if used:
+                self.feedback_text = f"Used Pill! +{self.item_power_amount} Power"
+                self.feedback_timer = self.feedback_duration
+
+        if not used:
+            self.feedback_text = "NO ITEM / NO EFFECT!"
+            self.feedback_timer = self.feedback_duration
+            return
+
+        self.items_menu.disable()
+        self.state = "enemy_turn"
+        self.timer = 0.0
+        self.cue_time = 0.0
+        self.green_active = False
+        self.action_menu.disable()
 
     #update function, mainly manages the timing mechanic and the power spam mechanic, as well as the state transitions
     def update(self, delta_time):
@@ -494,6 +589,17 @@ class BattleScreen:
             )
             feedback.draw()
 
+        if self.items_menu.enabled:
+            arcade.draw_lrbt_rectangle_filled(
+                0,
+                self.game.window_width,
+                0,
+                self.game.window_height,
+                (0, 0, 0, 180)
+            )
+            self.item_preview_list.draw()
+            self.items_menu.draw()
+
         #draw action menu if the player is in their turn and the power menu is not enabled and there is no levelup pending
         if self.state == "player_turn" and not self.power_menu.enabled and not self.levelup_pending:
             self.action_menu.draw()
@@ -533,6 +639,16 @@ class BattleScreen:
 
         if self.power_menu.enabled:
             self.power_menu.on_key_press(key, key_modifiers)
+            return
+
+        if self.items_menu.enabled:
+            self.items_menu.on_key_press(key, key_modifiers)
+
+            if self.items_menu.selected_index == 0:
+                self.update_item_preview("sausages")
+            elif self.items_menu.selected_index == 1:
+                self.update_item_preview("pills")
+
             return
 
         if self.state == "player_turn":
