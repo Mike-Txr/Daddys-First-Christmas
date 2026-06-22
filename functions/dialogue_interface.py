@@ -64,7 +64,10 @@ class speech_box():
 
         self.next_line(game)
 
-
+    def trigger_black_screen(self, game, duration=0.3):#---black---
+        print("Test")
+        game.screen_lock = True
+        game.screen_lock_timer = duration
 
     def next_line(self, game): #function to go to the next line of dialogue, triggered by arrow down key (from key_handler.py)
         while self.line < self.lines_amount - 1: #check if there are lines left
@@ -94,6 +97,8 @@ class speech_box():
                 self.entity.kill()
                 if self.entity in game.entity_list:
                     game.entity_list.remove(self.entity)
+                print("Hallo?")
+                self.trigger_black_screen(game, 0.3)#---black---
                 self.kill()
                 break
 

@@ -59,6 +59,9 @@ class MyGame(arcade.Window):
         self.current_dialogue = False
         self.current_screen = "TestMap.tmx"
 
+        self.screen_lock = False#---black---
+        self.screen_lock_timer = 0.0
+
         #Create a player object based on the player class from the player file
         self.player = player.Player(
             settings.INGAME_WIDTH * 0.5 * self.x_scale,
@@ -85,6 +88,17 @@ class MyGame(arcade.Window):
         # the screen to the background color, and erase what we drew last frame.
         self.clear()
 
+        if self.screen_lock:#---black---
+            print("Test")
+            arcade.draw_lrbt_rectangle_filled(
+                0,
+                self.window_width,
+                0,
+                self.window_height,
+                (0, 0, 0, 255)
+            )
+            return#---black---
+        
         # Call draw() on all your sprite lists below
         self.scene.draw(pixelated=True)
 
@@ -120,6 +134,14 @@ class MyGame(arcade.Window):
             return 
         else:
             self.menu_screen.disable()#Disable the game over screen when the game is not over
+
+        if self.screen_lock:#---black---
+            self.screen_lock_timer -= delta_time
+            if self.screen_lock_timer <= 0:
+                self.screen_lock = False
+            else:
+                self.screen_lock = True
+            return
 
         if self.player.health <= 0:#if the player's health is 0 or less, trigger the game over state
             self.game_over = True

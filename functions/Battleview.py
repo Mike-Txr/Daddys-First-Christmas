@@ -590,7 +590,7 @@ class BattleScreen:
 
         #draw the enemy sprite 
         if self.current_enemy is not None and self.current_enemy_texture is not None and self.state not in ("inactive", "finished"):
-            self.enemy_sprite_list.draw()
+            self.enemy_sprite_list.draw(pixelated=True)
 
         #if power_spam is activated, draw an overlay with the power attack name, the number of times space was pressed, and the time left
         if self.state == "power_spam":
