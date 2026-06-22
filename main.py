@@ -76,6 +76,7 @@ class MyGame(arcade.Window):
         UI.setup_hud(self)#load the function to set up the HUD (health, power, etc.) from UI.py
         self.player.set_xp(self.player.current_xp)
 
+
     def on_draw(self):
         """
         Render the screen.
@@ -183,7 +184,6 @@ class MyGame(arcade.Window):
         colls.coll_check(self.player, self.scene["Obstacles"], True)
 
         self.scene.update(delta_time)
-
 
 
     def on_key_press(self, key, key_modifiers):

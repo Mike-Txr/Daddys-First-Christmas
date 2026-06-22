@@ -24,3 +24,22 @@ def move_player(player, directions, obstacles): #function to move the player
     
     player.center_y += directions["y"] #move the player in y direction
     colls.coll_check(player, obstacles, adjust_player=True) #in case he is in an obstacle, adjust his position
+
+    directions_list = tuple(directions.values())
+    directions_list = tuple(min(max(i, -1), 1) for i in directions_list) #clamp the values to -1, 0 or 1
+
+    direction_dict = {
+        (0, 0): player.facing, #if the player isn't moving keep the old direction
+
+        (0, 1): "north",
+        (0, -1): "south",
+        (1, 0): "east",
+        (-1, 0): "west",
+        (1, 1): "north-east",
+        (-1, 1): "north-west",
+        (1, -1): "south-east",
+        (-1, -1): "south-west",
+    }
+
+    player.facing = direction_dict[directions_list]
+    player.update_texture()

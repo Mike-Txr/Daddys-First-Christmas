@@ -5,7 +5,7 @@ import json
 
 class Entity(arcade.Sprite):
 
-    def __init__(self, x, y, scale, file): #this init-function is not currently used, but might be useful later
+    def __init__(self, x, y, scale, file): #init-function currently only used for the player
         super().__init__("assets/"+file, scale = scale)
         self.center_x = x
         self.center_y = y

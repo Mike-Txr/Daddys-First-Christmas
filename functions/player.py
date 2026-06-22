@@ -5,9 +5,12 @@ import functions.entity as entity
 
 class Player(entity.Entity):
     def __init__(self, x, y, scale, game=None):
-        super().__init__(x, y, scale, "player.png")
-        self.center_x = x
-        self.center_y = y
+
+        self.facing = "south"
+
+        super().__init__(x, y, scale, "player/"+self.facing+".png")
+
+        
         self.dia_icon = "assets/player_dia.png"
 
         self.game = game
@@ -100,3 +103,6 @@ class Player(entity.Entity):
         self.pills -= 1
         self.set_power(self.power + amount)
         return True
+    
+    def update_texture(self): #update the player texture based on the direction the player is facing
+        self.texture = arcade.load_texture(f"assets/player/{self.facing}.png")
