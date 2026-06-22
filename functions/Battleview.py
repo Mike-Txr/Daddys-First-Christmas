@@ -1,7 +1,7 @@
 #main file for the whole fighting system, contains the battle logic
 
 #Battle is basically started by doing this:
-#enemy_data = {"max_hp": 50, "attack": 5, "red_time": 1.0, "xp_reward": 10, "coin_reward": 10}#########
+#enemy_data = {"max_hp": 50, "attack": 5, "red_time": 1.0, "xp_reward": 10, "coin_reward": 10, "image": "assets/NPC.png"}#########
 #game.battle = True
 #game.battleview.start_battle(enemy_data)
 
@@ -18,36 +18,33 @@ class BattleScreen:
         self.game = game#variable game, to access the main game class and its attributes like health, window_width, etc.
         self.ui = arcade.gui.UIManager()#set up UIManager
         self.root = arcade.gui.UIAnchorLayout()#set up the root layout to anchor the elements
+        self.ui.add(self.root)#anchor becomes part of self.ui
 
+        #battle background
         self.battle_background_texture = arcade.load_texture("assets/battle_background.png")#load background for battle
-        self.background_anchor = arcade.gui.UIAnchorLayout()
-
-        self.background_img = arcade.gui.UIImage(
+        self.background_anchor = arcade.gui.UIAnchorLayout()#make own anchor
+        self.background_img = arcade.gui.UIImage(#should fill whole screen
             texture=self.battle_background_texture,
             width=self.game.window_width,
             height=self.game.window_height
         )
-
         self.background_anchor.add(self.background_img, anchor_x="center", anchor_y="center")
         self.ui.add(self.background_anchor)
 
-        self.ui.add(self.root)#anchor becomes part of self.ui
-
+        #turn indicator (arrow above player/enemy)
         self.turn_indicator_sprite = arcade.Sprite("assets/arrow_turn.png", scale=0.12)
-        self.turn_indicator_list = arcade.SpriteList()
+        self.turn_indicator_list = arcade.SpriteList()#make a sprite list
         self.turn_indicator_list.append(self.turn_indicator_sprite)
-
         self.turn_indicator_visible = False
 
+        #current enemy (graphic of it)
         self.current_enemy_texture = None
-
         self.enemy_sprite = arcade.Sprite()
-        self.enemy_sprite.scale = 8.0
-
+        self.enemy_sprite.scale = 8.0#scale, could be changed easily
         self.enemy_sprite_list = arcade.SpriteList()
         self.enemy_sprite_list.append(self.enemy_sprite)
 
-        self.current_enemy = None#variable to store the current enemy, which will be set when start_battle is called
+        self.current_enemy = None#variable to store the current enemy with all its data, which will be set when start_battle is called
 
         #important variables for the battle logic
         self.state = "inactive" #variable to track the state of the battle screen
@@ -104,7 +101,7 @@ class BattleScreen:
             game=self.game,
             button_texts=power_button_texts,
             callbacks=[
-                lambda i=i: self.choose_power_attack(i)
+                lambda i=i: self.choose_power_attack(i)#this is a shortend version of just writing lamda: self.coose... over and over
                 for i in range(len(self.power_attack_data))
             ] + [self.close_power_menu],
             title_text="POWER ATTACKS",
@@ -129,23 +126,26 @@ class BattleScreen:
         )
         self.levelup_menu.disable()
 
+        #load the files of sausage and pill (items)
         self.sausage_texture = arcade.load_texture("assets/sausages.png")
         self.pill_texture = arcade.load_texture("assets/pills.png")
 
-        self.current_item_texture = self.sausage_texture
+        self.current_item_texture = self.sausage_texture#variable to show the right texture later (sausage at start)
 
+        #preview sprite to see the beautiful picture
         self.item_preview = arcade.Sprite()
         self.item_preview.texture = self.current_item_texture
         self.item_preview.scale = 0.6
         self.item_preview.center_x = self.game.window_width * 0.75
         self.item_preview.center_y = self.game.window_height * 0.52
 
-        self.item_preview_list = arcade.SpriteList()
+        self.item_preview_list = arcade.SpriteList()#sprite list to draw it later
         self.item_preview_list.append(self.item_preview)
 
-        self.item_heal_amount = 5
-        self.item_power_amount = 10
+        self.item_heal_amount = 5#how much sausage heals, can be easily modified
+        self.item_power_amount = 10#how much pills regenerate, can be easily modified
 
+        #again call Battlemenu.py
         self.items_menu = BattleMenu(
             game=self.game,
             button_texts=["Sausages", "Pills", "Back"],
@@ -160,6 +160,7 @@ class BattleScreen:
             allow_space=False,
         )
         self.items_menu.disable()
+
 
     #This function is called in the main game to start the battle, with all the enemy data passed as a dictionary
     def start_battle(self, enemy):
@@ -181,6 +182,7 @@ class BattleScreen:
         self.power_spam_count = 0
         self.power_spam_timer = 0.0
 
+        #if image is a part of self.current_enemy (normally always is), load texture and set position
         if "image" in self.current_enemy:
             self.current_enemy_texture = arcade.load_texture(self.current_enemy["image"])
             self.enemy_sprite.texture = self.current_enemy_texture
@@ -189,7 +191,7 @@ class BattleScreen:
         else:
             self.current_enemy_texture = None
 
-        # reset the battle menus and enable the action menu for the player to choose their action
+        #reset the battle menus and enable the action menu for the player to choose their action
         self.action_menu.reset()
         self.power_menu.reset()
         self.levelup_menu.reset()
@@ -202,93 +204,31 @@ class BattleScreen:
 
         self.levelup_pending = False#levelup_pending is set to false, because the player has not leveled up yet
 
-    def submenu_open(self):
-        return self.power_menu.enabled or self.items_menu.enabled or self.levelup_pending
+    #function to end the battle, called when the enemy's health is 0 or less or when the player's health is 0 or less, the battle is lost and the end_battle function is called with win=False
+    def end_battle(self, win=False):
+        print("Battle closing:", "Win" if win else "Loss")
+        old_level = self.game.player.level
 
-    def start_standard_attack(self):#function to start the standard attack
-        if self.state != "player_turn":
-            return
-
-        self.action_menu.disable()
-        self.player_attack_pressed()
-
-    def open_power_menu(self):#fucntion to open the power attacks and chosse from them
-        if self.state != "player_turn":
-            return
-
-        self.action_menu.disable()
-        self.power_menu.reset()
-        self.power_menu.enable()
-
-    def close_power_menu(self):#function to close the power attacks and go back if decision is changed by player
-        self.power_menu.disable()
-        self.action_menu.enable()
-
-    def choose_power_attack(self, index):#function to choose a power attack, if the player has enough power, the power attack will be started
-        if self.state != "player_turn" or not self.power_menu.enabled:
-            return
-
-        self.start_power_attack(index)
-
-    def start_power_attack(self, index):#function to start one of the power attaks, the just differ in a few variables (spaming, costs, damage, ...)
-        if self.state != "player_turn":
-            return
-
-        data = self.power_attack_data[index]
-        cost = data["power_cost"]
-
-        if self.game.player.power < cost:
-            self.feedback_text = "NOT ENOUGH POWER!"
-            self.feedback_timer = self.feedback_duration
-            print("Not enough power to use")
-            self.power_menu.enable()
-            return
-
-        self.game.player.set_power(self.game.player.power - cost)#decrease the player's power by the cost of the power attack
-
-        #set the variables for the power spam mechanic, which will be used in the update function to determine how many times the player pressed space and how much time is left
-        self.power_attack_index = index
-        self.power_spam_count = 0
-        self.power_spam_timer = self.power_spam_duration
-        self.power_spam_active = True
+        #give coin and xp reward
+        self.game.player.set_coins(self.game.player.coins + self.current_enemy["coin_reward"])
+        self.game.player.set_xp(self.game.player.current_xp + self.current_enemy["xp_reward"])
 
         self.action_menu.disable()
         self.power_menu.disable()
 
-        self.state = "power_spam"
-        self.feedback_text = ""
-        self.feedback_timer = 0.0
-
-        print(f"{data['name']} started, costs {cost} Power")
-
-    def resolve_power_attack(self):#function to resolve the power attack, which will be called when the power spam timer runs out, calculates the damage based on how many times the player pressed space and the target value of the power attack
-        if self.state != "power_spam":
+        #if level up change, let the player choose its stat to increase 
+        if self.game.player.level > old_level:
+            self.levelup_pending = True
+            self.state = "levelup"
+            self.levelup_menu.reset()
+            self.levelup_menu.enable()
             return
 
-        data = self.power_attack_data[self.power_attack_index]#based on the index of the power attack, the data is retrieved from the power_attack_data list
-        target = data["target"]
-
-        #calculate the damage based on how many times the player pressed space and the target value of the power attack, the damage is clamped between min_damage and max_damage
-        ratio = min(self.power_spam_count / target, 1.0)
-        damage = int(round(data["min_damage"] + (data["max_damage"] - data["min_damage"]) * ratio))
-        damage = max(data["min_damage"], min(data["max_damage"], damage))
-
-        self.feedback_text = f"{data['name']}! {damage} DMG"
-        self.feedback_timer = self.feedback_duration
-
-        self.current_enemy_health -= damage
-        print(f"{data['name']} deals {damage} damage ({self.power_spam_count}x SPACE)")
-
-        self.power_spam_active = False
-
-        if self.current_enemy_health <= 0:#end battle, if the enemy's health is 0 or less, the battle is won and the end_battle function is called with win=True
-            self.end_battle(win=True)
-            return
-
-        self.state = "enemy_turn"
-        self.timer = 0.0
-        self.cue_time = 0.0
-        self.green_active = False
+        self.state = "finished"
+        self.current_enemy = None
+        self.game.battle = False
+        self.levelup_menu.disable()
+        self.disable()
 
     #when the player levels up, this function is called to apply the chosen stat increase, and then the battle is ended
     def apply_levelup_choice(self, choice_index):
@@ -323,20 +263,33 @@ class BattleScreen:
         self.power_menu.disable()
         self.disable()
 
-    def refresh_items_menu(self):
-        self.items_menu.subtitle_text = (
-            f"Sausages: {self.game.player.sausages}   "
-            f"Pills: {self.game.player.pills}"
-        )
 
-    def update_item_preview(self, item_name: str):
-        if item_name == "sausages":
-            self.current_item_texture = self.sausage_texture
-        elif item_name == "pills":
-            self.current_item_texture = self.pill_texture
+    #just for ESC handling in key_handler.py (esc does not open paused directly when in submenu)
+    def submenu_open(self):
+        return self.power_menu.enabled or self.items_menu.enabled or self.levelup_pending
 
-        self.item_preview.texture = self.current_item_texture
+    #fucntion to open the power attacks and chosse from them
+    def open_power_menu(self):
+        if self.state != "player_turn":
+            return
 
+        self.action_menu.disable()
+        self.power_menu.reset()
+        self.power_menu.enable()
+
+    #function to close the power attacks and go back if decision is changed by player
+    def close_power_menu(self):
+        self.power_menu.disable()
+        self.action_menu.enable()
+
+    #function to choose a power attack
+    def choose_power_attack(self, index):
+        if self.state != "player_turn" or not self.power_menu.enabled:
+            return
+
+        self.start_power_attack(index)
+
+    #function to open the items menu (same as before)
     def open_items_menu(self):
         if self.state != "player_turn":
             return
@@ -349,30 +302,32 @@ class BattleScreen:
         self.items_menu.reset()
         self.items_menu.enable()
 
+    #fucntion to close it
     def close_items_menu(self):
         self.items_menu.disable()
         if self.state == "player_turn":
             self.action_menu.enable()
 
+    #function to use the item
     def use_item(self, item_name):
         if self.state != "player_turn" or not self.items_menu.enabled:
             return
 
         used = False
 
-        if item_name == "sausages":
+        if item_name == "sausages":#heals with the right amount and displays text
             used = self.game.player.use_sausage(self.item_heal_amount)
             if used:
                 self.feedback_text = f"Used Sausage! +{self.item_heal_amount} HP"
                 self.feedback_timer = self.feedback_duration
 
-        elif item_name == "pills":
+        elif item_name == "pills":#regenerates the right amount and displays text
             used = self.game.player.use_pill(self.item_power_amount)
             if used:
                 self.feedback_text = f"Used Pill! +{self.item_power_amount} Power"
                 self.feedback_timer = self.feedback_duration
 
-        if not used:
+        if not used:#can either have no item or no effect
             self.feedback_text = "NO ITEM / NO EFFECT!"
             self.feedback_timer = self.feedback_duration
             return
@@ -383,6 +338,164 @@ class BattleScreen:
         self.cue_time = 0.0
         self.green_active = False
         self.action_menu.disable()
+
+    def refresh_items_menu(self):#show the amount
+        self.items_menu.subtitle_text = (
+            f"Sausages: {self.game.player.sausages}   "
+            f"Pills: {self.game.player.pills}"
+        )
+
+    #update the preview (graphic of it) all the time
+    def update_item_preview(self, item_name: str):
+        if item_name == "sausages":
+            self.current_item_texture = self.sausage_texture
+        elif item_name == "pills":
+            self.current_item_texture = self.pill_texture
+
+        self.item_preview.texture = self.current_item_texture
+
+
+    #function to start the standard attack
+    def start_standard_attack(self):
+        if self.state != "player_turn":
+            return
+
+        self.action_menu.disable()
+        self.player_attack_pressed()
+
+    #function to start one of the power attaks, the just differ in a few variables (spaming, costs, damage, ...)
+    def start_power_attack(self, index):
+        if self.state != "player_turn":
+            return
+
+        data = self.power_attack_data[index]
+        cost = data["power_cost"]
+
+        if self.game.player.power < cost:#if the cost is to high display the text saying it
+            self.feedback_text = "NOT ENOUGH POWER!"
+            self.feedback_timer = self.feedback_duration
+            print("Not enough power to use")
+            self.power_menu.enable()
+            return
+
+        self.game.player.set_power(self.game.player.power - cost)#decrease the player's power by the cost of the power attack
+
+        #set the variables for the power spam mechanic, which will be used in the update function to determine how many times the player pressed space and how much time is left
+        self.power_attack_index = index
+        self.power_spam_count = 0
+        self.power_spam_timer = self.power_spam_duration
+        self.power_spam_active = True
+
+        self.action_menu.disable()
+        self.power_menu.disable()
+
+        self.state = "power_spam"
+        self.feedback_text = ""
+        self.feedback_timer = 0.0
+
+        print(f"{data['name']} started, costs {cost} Power")#initiate the power spam minigame
+
+    def resolve_power_attack(self):#function to resolve the power attack, which will be called when the power spam timer runs out, calculates the damage based on how many times the player pressed space and the target value of the power attack
+        if self.state != "power_spam":
+            return
+
+        data = self.power_attack_data[self.power_attack_index]#based on the index of the power attack, the data is retrieved from the power_attack_data list
+        target = data["target"]
+
+        #calculate the damage based on how many times the player pressed space and the target value of the power attack, the damage is clamped between min_damage and max_damage
+        ratio = min(self.power_spam_count / target, 1.0)
+        damage = int(round(data["min_damage"] + (data["max_damage"] - data["min_damage"]) * ratio))
+        damage = max(data["min_damage"], min(data["max_damage"], damage))
+
+        self.feedback_text = f"{data['name']}! {damage} DMG"
+        self.feedback_timer = self.feedback_duration
+
+        self.current_enemy_health -= damage
+        print(f"{data['name']} deals {damage} damage ({self.power_spam_count}x SPACE)")
+
+        self.power_spam_active = False
+
+        if self.current_enemy_health <= 0:#end battle, if the enemy's health is 0 or less, the battle is won and the end_battle function is called with win=True
+            self.end_battle(win=True)
+            return
+
+        self.state = "enemy_turn"
+        self.timer = 0.0
+        self.cue_time = 0.0
+        self.green_active = False
+
+    #function to start the timing mechanic for the standard attack, called when the player presses the standard attack button
+    def player_attack_pressed(self):
+        if self.state == "player_turn":
+            self.state = "player_timing_attack"
+            self.timer = 0.0
+            self.cue_time = 0.0
+            self.green_active = False
+
+    #function to start the timing mechanic for the enemy attack, called when the enemy's turn starts
+    def start_block_timing(self):
+        if self.state == "enemy_turn":
+            self.state = "enemy_timing_block"
+            self.timer = 0.0
+            self.cue_time = 0.0
+            self.green_active = False
+            self.block_success = False
+
+    #function to finish the timing mechanic for the standard attack, called when the player presses space during the timing mechanic or when the timing mechanic times out
+    def finish_attack_timing(self, missed=False):
+        if self.state != "player_timing_attack" or self.current_enemy is None:
+            return
+
+        self.state = "resolving"
+
+        if missed:#if missed the damage is way lower, give a message to the player
+            damage = 2
+            self.feedback_text = f"MISS! {damage} DMG"
+        else:
+            damage = 10
+            self.feedback_text = f"PERFECT! {damage} DMG"
+
+        self.feedback_timer = self.feedback_duration
+
+        self.current_enemy_health -= damage
+        print(f"Player deals {damage} damage")
+
+        if self.current_enemy_health <= 0:#end battle if the enemy's health is 0 or less, the battle is won and the end_battle function is called with win=True
+            self.end_battle(win=True)
+            return
+
+        self.state = "enemy_turn"
+        self.timer = 0.0
+        self.cue_time = 0.0
+        self.green_active = False
+        self.action_menu.disable()
+
+    #function to resolve the enemy attack, called when the player presses space during the timing mechanic or when the timing mechanic times out
+    def resolve_enemy_attack(self, blocked=False):
+        if self.state != "enemy_timing_block":
+            return
+
+        damage = self.current_enemy["attack"]
+
+        if blocked or self.block_success:#damage way lower if blocked, give a message to the player
+            damage = max(1, int(damage * 0.3))
+            self.feedback_text = f"PERFECT! {damage} DMG TAKEN"
+        else:
+            self.feedback_text = f"MISS! {damage} DMG TAKEN"
+
+        self.feedback_timer = self.feedback_duration
+        self.game.player.set_health(self.game.player.health - damage)
+        print("Enemy deals", damage, "damage")
+
+        self.state = "player_turn"
+        self.timer = 0.0
+        self.cue_time = 0.0
+        self.green_active = False
+        self.block_success = False
+
+        self.action_menu.reset()
+        self.action_menu.enable()
+
 
     #update function, mainly manages the timing mechanic and the power spam mechanic, as well as the state transitions
     def update(self, delta_time):
@@ -424,96 +537,21 @@ class BattleScreen:
             if self.power_spam_timer <= 0:
                 self.resolve_power_attack()
 
-    def player_attack_pressed(self):#function to start the timing mechanic for the standard attack, called when the player presses the standard attack button
-        if self.state == "player_turn":
-            self.state = "player_timing_attack"
-            self.timer = 0.0
-            self.cue_time = 0.0
-            self.green_active = False
+    #function to always update the turn indication (change position from left to right)
+    def update_turn_indicator(self):
+        if self.state in ("player_turn", "player_timing_attack", "power_spam"):
+            self.turn_indicator_visible = True
+            self.turn_indicator_sprite.center_x = self.game.window_width * 0.2
+            self.turn_indicator_sprite.center_y = self.game.window_height * 0.6
 
-    def start_block_timing(self):#function to start the timing mechanic for the enemy attack, called when the enemy's turn starts
-        if self.state == "enemy_turn":
-            self.state = "enemy_timing_block"
-            self.timer = 0.0
-            self.cue_time = 0.0
-            self.green_active = False
-            self.block_success = False
+        elif self.state in ("enemy_turn", "enemy_timing_block"):
+            self.turn_indicator_visible = True
+            self.turn_indicator_sprite.center_x = self.game.window_width * 0.8
+            self.turn_indicator_sprite.center_y = self.game.window_height * 0.6
 
-    def finish_attack_timing(self, missed=False):#function to finish the timing mechanic for the standard attack, called when the player presses space during the timing mechanic or when the timing mechanic times out
-        if self.state != "player_timing_attack" or self.current_enemy is None:
-            return
-
-        self.state = "resolving"
-
-        if missed:#if missed the damage is way lower, give a message to the player
-            damage = 2
-            self.feedback_text = f"MISS! {damage} DMG"
         else:
-            damage = 10
-            self.feedback_text = f"PERFECT! {damage} DMG"
+            self.turn_indicator_visible = False
 
-        self.feedback_timer = self.feedback_duration
-
-        self.current_enemy_health -= damage
-        print(f"Player deals {damage} damage")
-
-        if self.current_enemy_health <= 0:#end battle if the enemy's health is 0 or less, the battle is won and the end_battle function is called with win=True
-            self.end_battle(win=True)
-            return
-
-        self.state = "enemy_turn"
-        self.timer = 0.0
-        self.cue_time = 0.0
-        self.green_active = False
-        self.action_menu.disable()
-
-    def resolve_enemy_attack(self, blocked=False):#function to resolve the enemy attack, called when the player presses space during the timing mechanic or when the timing mechanic times out
-        if self.state != "enemy_timing_block":
-            return
-
-        damage = self.current_enemy["attack"]
-
-        if blocked or self.block_success:#damage way lower if blocked, give a message to the player
-            damage = max(1, int(damage * 0.3))
-            self.feedback_text = f"PERFECT! {damage} DMG TAKEN"
-        else:
-            self.feedback_text = f"MISS! {damage} DMG TAKEN"
-
-        self.feedback_timer = self.feedback_duration
-        self.game.player.set_health(self.game.player.health - damage)
-        print("Enemy deals", damage, "damage")
-
-        self.state = "player_turn"
-        self.timer = 0.0
-        self.cue_time = 0.0
-        self.green_active = False
-        self.block_success = False
-
-        self.action_menu.reset()
-        self.action_menu.enable()
-
-    def end_battle(self, win=False):#function to end the battle, called when the enemy's health is 0 or less or when the player's health is 0 or less, the battle is lost and the end_battle function is called with win=False
-        print("Battle closing:", "Win" if win else "Loss")
-        old_level = self.game.player.level
-
-        self.game.player.set_coins(self.game.player.coins + self.current_enemy["coin_reward"])
-        self.game.player.set_xp(self.game.player.current_xp + self.current_enemy["xp_reward"])
-
-        self.action_menu.disable()
-        self.power_menu.disable()
-
-        if self.game.player.level > old_level:
-            self.levelup_pending = True
-            self.state = "levelup"
-            self.levelup_menu.reset()
-            self.levelup_menu.enable()
-            return
-
-        self.state = "finished"
-        self.current_enemy = None
-        self.game.battle = False
-        self.levelup_menu.disable()
-        self.disable()
 
     def enable(self):#enable the battle screen, so that it can be drawn and interacted with
         self.ui.enable()
@@ -521,7 +559,9 @@ class BattleScreen:
     def disable(self):#disable the battle screen, so that it can not be drawn and interacted with
         self.ui.disable()
 
-    def draw_traffic_light(self):#draw the traffic light used for standard attack and blocking
+
+    #draw the traffic light used for standard attack and blocking (just helper function)
+    def draw_traffic_light(self):
         if self.state not in ("player_timing_attack", "enemy_timing_block"):
             return
 
@@ -537,20 +577,6 @@ class BattleScreen:
         arcade.draw_circle_filled(x, y, radius, color)#easy funciton provided by arcade
         arcade.draw_circle_outline(x, y, radius, arcade.color.BLACK, 3)
 
-    def update_turn_indicator(self):
-        if self.state in ("player_turn", "player_timing_attack", "power_spam"):
-            self.turn_indicator_visible = True
-            self.turn_indicator_sprite.center_x = self.game.window_width * 0.2
-            self.turn_indicator_sprite.center_y = self.game.window_height * 0.6
-
-        elif self.state in ("enemy_turn", "enemy_timing_block"):
-            self.turn_indicator_visible = True
-            self.turn_indicator_sprite.center_x = self.game.window_width * 0.8
-            self.turn_indicator_sprite.center_y = self.game.window_height * 0.6
-
-        else:
-            self.turn_indicator_visible = False
-
     #draw function
     def draw(self):
         #draw the traffic light and the UI elements, including the menus and feedback text
@@ -558,9 +584,11 @@ class BattleScreen:
         self.ui.draw()
         self.draw_traffic_light()
 
+        #draw the indicator
         if self.turn_indicator_visible:
             self.turn_indicator_list.draw()
 
+        #draw the enemy sprite 
         if self.current_enemy is not None and self.current_enemy_texture is not None and self.state not in ("inactive", "finished"):
             self.enemy_sprite_list.draw()
 
@@ -670,6 +698,7 @@ class BattleScreen:
                 (0, 0, 0, 180)
             )
             self.levelup_menu.draw()
+
 
     #get key presses, mainly SPACE for the timing mechanics
     def on_key_press(self, key, key_modifiers):

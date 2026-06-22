@@ -30,7 +30,7 @@ class Player(entity.Entity):
 
         self.coins = 10#variable for coins, could be changed throughout the game
 
-        #"inventory"
+        #"inventory" --> the current number
         self.sausages = 5#variable for sausages, fills up hearts
         self.pills = 5#variable for pills, fills up power
 
