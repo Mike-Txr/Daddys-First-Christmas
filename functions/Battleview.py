@@ -640,11 +640,11 @@ class BattleScreen:
         if self.current_enemy is not None and self.state not in ("inactive", "finished"):
             hp_text = arcade.Text(
                 f"Enemy HP: {max(0, self.current_enemy_health)} / {self.current_enemy['max_hp']}",
-                self.game.window_width - 185,
-                self.game.window_height - 250,
+                self.game.window_width * 0.8,
+                self.game.window_height *0.7,
                 arcade.color.BLACK,
                 24,
-                anchor_x="right",
+                anchor_x="center",
                 anchor_y="center"
             )
             hp_text.draw()
