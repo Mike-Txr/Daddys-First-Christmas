@@ -207,6 +207,9 @@ class MyGame(arcade.Window):
 
         colls.coll_check(self.player, self.scene["Obstacles"], True)
 
+
+        self.player.update_animation(delta_time)
+
         self.scene.update(delta_time)
 
 

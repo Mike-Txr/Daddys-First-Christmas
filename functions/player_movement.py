@@ -15,9 +15,22 @@ def calc_movement(): #function to calculate movement of the player based on curr
     right = arcade.key.D in kh.current_pressed
     directions["x"] = right - left #amount of pixels to move in x direction this frame
 
+    #if the player is moving in two directions at once (eg north and east)
+    #then he shouldnt be moving one pixel in each direction, because that would make his overall speed sqrt(2)
+    #and it just looks weird when the player starts randomly walking faster
+    #so both directions need to be multiplied by approximately sqrt(2)
+    if directions["x"] * directions["y"] != 0:
+        directions["x"] *= 0.71
+        directions["y"] *= 0.71
+
     return directions
 
 def move_player(player, directions, obstacles): #function to move the player
+
+    if directions == {"x": 0, "y": 0}:
+        player.animation_enabled = False
+    else:
+        player.animation_enabled = True
 
     player.center_x += directions["x"] #move the player in x direction
     colls.coll_check(player, obstacles, adjust_player=True) #in case he is in an obstacle, adjust his position

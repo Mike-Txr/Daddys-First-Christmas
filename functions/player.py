@@ -1,5 +1,9 @@
 #basic player class, for variables and functions
 import arcade
+
+from PIL import Image
+import io
+
 import functions.settings as settings
 import functions.entity as entity
 
@@ -12,6 +16,44 @@ class Player(entity.Entity):
 
         
         self.dia_icon = "assets/player_dia.png"
+
+        #our player texture is handled like this:
+        #there are 8 gif files, looking in each direction
+        #every one of them is animated with the players walk animation
+        #here we are loading every single one of these gif-files as frames
+        self.animation_frames = {
+            "north": self.extract_frames_from_gif("assets/player/north.gif"),
+            "south": self.extract_frames_from_gif("assets/player/south.gif"),
+            "east": self.extract_frames_from_gif("assets/player/east.gif"),
+            "west": self.extract_frames_from_gif("assets/player/west.gif"),
+            "north-east": self.extract_frames_from_gif("assets/player/north-east.gif"),
+            "north-west": self.extract_frames_from_gif("assets/player/north-west.gif"),
+            "south-east": self.extract_frames_from_gif("assets/player/south-east.gif"),
+            "south-west": self.extract_frames_from_gif("assets/player/south-west.gif"),
+        }
+
+        #converting the frames to textures
+        self.textures = {}
+        for direction, pil_frames in self.animation_frames.items():
+            self.textures[direction] = [
+                arcade.Texture(image=frame) for frame in pil_frames
+            ] 
+
+        #these textures are loaded from png files
+        #there are also 8 of them, looking in each direction
+        #but they are not animated.
+        #instead, this is just how the player is supposed to look when not moving
+        self.idle_textures = {
+            direction: arcade.load_texture(f"assets/player/{direction}.png")
+            for direction in self.animation_frames
+        }
+
+        self.animation_enabled = False
+        self.current_frame = 0 #index for going through the frames
+        self.frame_counter = 0 #timer for how long we've been at the current frame
+        self.frame_speed = 0.1 #time for how long we're supposed to be at each frame
+        self.last_facing = self.facing  #store previous direction to detect direction changes
+
 
         self.game = game
         
@@ -106,5 +148,43 @@ class Player(entity.Entity):
         self.set_power(self.power + self.pill_power_amount)
         return True
     
+
+    def extract_frames_from_gif(self, filepath): #use the PIL library to extract our frames
+        frames = []
+
+        gif = Image.open(filepath)
+        for frame_index in range(gif.n_frames):
+            gif.seek(frame_index)
+            frames.append(gif.copy().convert("RGBA"))
+
+        return frames
+
+    def update_animation(self, delta_time): #called each frame
+        
+        if self.animation_enabled: #only executed if the player is currently walking
+
+            #delta_time is calculated by the arcade library - it's the time the last frame took to run
+            self.frame_counter += delta_time
+            
+            if self.frame_counter >= self.frame_speed: #if we've been at the current frame for long enough
+                #go to the next one
+                self.frame_counter = 0
+                self.current_frame += 1
+                
+                #if we're at the last frame, reset to the first one
+                max_frames = len(self.textures[self.facing])
+                if self.current_frame >= max_frames:
+                    self.current_frame = 0
+                
+                #update texture
+                self.texture = self.textures[self.facing][self.current_frame]
+        
+        else: #if the player is not currently walking, reset to the standard image (png)
+            self.texture = self.idle_textures[self.facing]
+    
     def update_texture(self): #update the player texture based on the direction the player is facing
-        self.texture = arcade.load_texture(f"assets/player/{self.facing}.png")
+        if self.facing != self.last_facing:
+            self.last_facing = self.facing
+            self.current_frame = 0
+            self.frame_counter = 0
+            self.texture = self.idle_textures[self.facing]
